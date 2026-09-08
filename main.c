@@ -34,6 +34,7 @@ int main(void)
     InitWindow(WIDTH, HEIGHT, "HIT 'EM ALL");
     InitAudioDevice();
     SetTargetFPS(60);
+
     // loading all audio, textures, fonts
     Music bgmusic = LoadMusicStream("assets/audio/Game Window.mp3");
     Sound shootsound = LoadSound("assets/audio/Gun Shooting.ogg");
@@ -105,7 +106,7 @@ int main(void)
         float maxarrowspeed = 2500.0f;
         float pullspeed = 100.0f;
 
-        // aiming, pulling back and shooting arrow
+        // aiming (clamped to +/-45 degrees), pulling back and shooting arrow
         if (arrowsleft > 0 && gameover == false)
         {
             float mousepointerangle = atan2f(mouseposition.y - arrowpivot.y, mouseposition.x - arrowpivot.x);
@@ -182,7 +183,7 @@ int main(void)
             }
         }
 
-        // collision physics
+        // collision physics - gold balloons give 2 bonus arrows and are worth more than normal ones
         for (int i = 0; i < MAXBALLOONS; i++)
         {
             if (balloons[i].active == false)
@@ -200,7 +201,7 @@ int main(void)
                 if (balloons[i].gold == true)
                 {
                     arrowsleft += 2;
-                    score += 10;
+                    score += 30;
                 }
                 else
                 {
@@ -210,7 +211,7 @@ int main(void)
             }
         }
 
-        // gameover and restart
+        // gameover and highscore save
         if (arrowsleft == 0 && arrow.active == false && gameover == false)
         {
             gameover = true;
@@ -229,6 +230,8 @@ int main(void)
             }
         }
 
+        // restart - pulldistance is reset here so a leftover charge from before
+        // the game ended can't carry into the new round
         if (gameover == true && IsKeyPressed(KEY_R) == true)
         {
             gameover = false;
@@ -236,6 +239,7 @@ int main(void)
             score = 0;
             currenttimer = 0.0f;
             launchspeed = 0.0;
+            pulldistance = 0.0f;
 
             arrow.active = false;
             for (int i = 0; i < MAXBALLOONS; i++)
@@ -253,6 +257,7 @@ int main(void)
         Rectangle bgdest = {0.0f, 0.0f, (float)WIDTH, (float)HEIGHT};
         DrawTexturePro(background, bgsource, bgdest, (Vector2){0.0f, 0.0f}, 0.0f, WHITE);
 
+        // bow drawing
         float bowwidth = 240.0f;
         float bowheight = 240.0f;
         Rectangle bowsource = {0.0f, 0.0f, (float)bowimage.width, (float)bowimage.height};
@@ -266,6 +271,7 @@ int main(void)
         DrawLineEx(bowstringbottom, pullpoint, 3.5f, LIGHTGRAY);
         DrawLineEx(bowstringtop, pullpoint, 3.5f, LIGHTGRAY);
 
+        // arrow drawing (resting on string / in flight)
         float arrowwidth = 110.0f;
         float arrowheight = 45.0f;
         if (gameover == false && arrow.active == false && arrowsleft > 0)
@@ -285,6 +291,7 @@ int main(void)
             DrawTexturePro(arrowimage, arrowsource, arrowdest, arroworigin, arrowangle * RAD2DEG, WHITE);
         }
 
+        // balloon drawing
         for (int i = 0; i < MAXBALLOONS; i++)
         {
             if (balloons[i].active == true)
@@ -309,6 +316,16 @@ int main(void)
         DrawTextEx(customfont, TextFormat("ANGLE: %.2f", -(aimangle * RAD2DEG)), (Vector2){30, 673}, 42, 2, BLACK);
 
         DrawTextEx(customfont, TextFormat("LAUNCH SPEED: %.2f", launchspeed), (Vector2){30, 723}, 42, 2, BLACK);
+
+        // live power readout while pulling back the string - unlike LAUNCH SPEED above
+        // (which only updates once you actually fire), this updates in real time as
+        // pulldistance changes, so you can see the shot power before releasing
+        {
+            float currentPullRatio = pulldistance / maxpulldistance;
+            float currentPotentialSpeed = minarrowspeed + currentPullRatio * (maxarrowspeed - minarrowspeed);
+            DrawTextEx(customfont, TextFormat("POWER: %.2f", currentPotentialSpeed), (Vector2){32, 773 + 2}, 42, 2, BLACK);
+            DrawTextEx(customfont, TextFormat("POWER: %.2f", currentPotentialSpeed), (Vector2){30, 773}, 42, 2, WHITE);
+        }
 
         // gameover screen
         if (gameover == true)
@@ -335,6 +352,7 @@ int main(void)
         EndDrawing();
     }
 
+    // cleanup
     UnloadTexture(background);
     for (int i = 0; i < NORMALBALLONSNUM; i++)
     {
