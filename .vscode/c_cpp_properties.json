@@ -1,7 +1,7 @@
 {
   "configurations": [
     {
-      "name": "Win32",
+      "name": "windows-gcc-x64",
       "includePath": [
         "${workspaceFolder}/**",
         "${workspaceFolder}/raylib/raylib-6.0_win64_mingw-w64/include"
@@ -11,9 +11,10 @@
         "UNICODE",
         "_UNICODE"
       ],
-      "compilerPath": "gcc",
+      "compilerPath": "C:/msys64/ucrt64/bin/gcc.exe",
       "cStandard": "c11",
-      "intelliSenseMode": "windows-gcc-x64"
+      "intelliSenseMode": "windows-gcc-x64",
+      "cppStandard": "${default}"
     },
     {
       "name": "Linux",

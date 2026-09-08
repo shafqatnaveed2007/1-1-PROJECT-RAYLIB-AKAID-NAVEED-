@@ -43,7 +43,7 @@ int main(void)
 
     PlayMusicStream(bgmusic);
 
-    Texture2D background = LoadTexture("assets/sprites/Gamescreen.png");
+    Texture2D background = LoadTexture("assets/sprites/bg-contrast.png");
     Texture2D gameovertexture = LoadTexture("assets/sprites/gameover.png");
     Texture2D bowimage = LoadTexture("assets/sprites/bow.png");
     Texture2D arrowimage = LoadTexture("assets/sprites/arrow.png");
