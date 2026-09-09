@@ -25,6 +25,7 @@ typedef struct
     float speed;
     bool active;
     bool gold;
+    bool danger;
     int index;
 } Balloon;
 
@@ -48,6 +49,7 @@ int main(void)
     Texture2D bowimage = LoadTexture("assets/sprites/bow.png");
     Texture2D arrowimage = LoadTexture("assets/sprites/arrow.png");
     Texture2D specialballoon = LoadTexture("assets/sprites/specialballoon.png");
+    Texture2D dangerballoon = LoadTexture("assets/sprites/dangerballoon (1).png");
 
     Texture2D normalballoons[NORMALBALLONSNUM];
     for (int i = 0; i < NORMALBALLONSNUM; i++)
@@ -175,7 +177,19 @@ int main(void)
                         balloons[i].speed = 150.0f;
                         balloons[i].active = true;
                         balloons[i].radius = balloonradius;
-                        balloons[i].gold = (GetRandomValue(1, 10) <= 2);
+
+                        // Danger balloon check when score reaches 100
+                        if (score >= 10 && GetRandomValue(1, 100) <= 40)
+                        {
+                            balloons[i].danger = true;
+                            balloons[i].gold = false;
+                        }
+                        else
+                        {
+                            balloons[i].danger = false;
+                            balloons[i].gold = (GetRandomValue(1, 10) <= 2);
+                        }
+
                         balloons[i].index = GetRandomValue(0, 3);
                         break;
                     }
@@ -198,16 +212,35 @@ int main(void)
             {
                 arrow.active = false;
                 balloons[i].active = false;
-                if (balloons[i].gold == true)
+
+                if (balloons[i].danger == true)
+                {
+                    gameover = true;
+                    StopMusicStream(bgmusic);
+                    PlaySound(gameoversound);
+
+                    if (score > highestscore)
+                    {
+                        highestscore = score;
+                        FILE *highestscorefile = fopen("highestscore.txt", "w");
+                        if (highestscorefile != NULL)
+                        {
+                            fprintf(highestscorefile, "%d", highestscore);
+                            fclose(highestscorefile);
+                        }
+                    }
+                }
+                else if (balloons[i].gold == true)
                 {
                     arrowsleft += 2;
                     score += 30;
+                    PlaySound(popsound);
                 }
                 else
                 {
                     score += 20;
+                    PlaySound(popsound);
                 }
-                PlaySound(popsound);
             }
         }
 
@@ -296,13 +329,17 @@ int main(void)
         {
             if (balloons[i].active == true)
             {
-                if (balloons[i].gold == true)
+                if (balloons[i].danger == true)
+                {
+                    DrawTextureV(dangerballoon, (Vector2){balloons[i].position.x - dangerballoon.width / 2.0f, balloons[i].position.y - dangerballoon.height / 2.0f}, WHITE);
+                }
+                else if (balloons[i].gold == true)
                 {
                     DrawTextureV(specialballoon, (Vector2){balloons[i].position.x - specialballoon.width / 2.0f, balloons[i].position.y - specialballoon.height / 2.0f}, WHITE);
                 }
                 else
                 {
-                    DrawTextureV(normalballoons[balloons[i].index], (Vector2){balloons[i].position.x - specialballoon.height / 2.0f, balloons[i].position.y - specialballoon.height / 2.0f}, WHITE);
+                    DrawTextureV(normalballoons[balloons[i].index], (Vector2){balloons[i].position.x - normalballoons[balloons[i].index].width / 2.0f, balloons[i].position.y - normalballoons[balloons[i].index].height / 2.0f}, WHITE);
                 }
             }
         }
@@ -359,6 +396,7 @@ int main(void)
         UnloadTexture(normalballoons[i]);
     }
     UnloadTexture(specialballoon);
+    UnloadTexture(dangerballoon);
     UnloadTexture(gameovertexture);
     UnloadTexture(bowimage);
     UnloadTexture(arrowimage);
