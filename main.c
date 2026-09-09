@@ -44,7 +44,7 @@ int main(void)
 
     PlayMusicStream(bgmusic);
 
-    Texture2D background = LoadTexture("assets/sprites/bg-contrast.png");
+    Texture2D background = LoadTexture("assets/sprites/Untitled-1.png");
     Texture2D gameovertexture = LoadTexture("assets/sprites/gameover.png");
     Texture2D bowimage = LoadTexture("assets/sprites/bow.png");
     Texture2D arrowimage = LoadTexture("assets/sprites/arrow.png");
@@ -210,7 +210,7 @@ int main(void)
 
             if (arrow.active == true && CheckCollisionCircles(arrow.position, arrow.radius, balloons[i].position, balloons[i].radius) == true)
             {
-                arrow.active = false;
+                
                 balloons[i].active = false;
 
                 if (balloons[i].danger == true)
@@ -310,8 +310,9 @@ int main(void)
         if (gameover == false && arrow.active == false && arrowsleft > 0)
         {
 
+            Vector2 restPos = Vector2Subtract(arrowpivot, Vector2Scale(aimdirection, pulldistance * 0.5f));//less pull of arrow compared to string
             Rectangle arrowsource = {0.0f, 0.0f, (float)arrowimage.width, (float)arrowimage.height};
-            Rectangle arrowdest = {pullpoint.x, pullpoint.y, arrowwidth, arrowheight};
+            Rectangle arrowdest = {restPos.x, restPos.y, arrowwidth, arrowheight};
             Vector2 arroworigin = {arrowwidth / 2.0f, arrowheight / 2.0f};
             DrawTexturePro(arrowimage, arrowsource, arrowdest, arroworigin, aimangle * RAD2DEG, WHITE);
         }
