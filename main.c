@@ -84,6 +84,8 @@ int main(void)
     float spawninterval = 2.0f;
     float pulldistance = 0.0f;
     float launchspeed = 0.0f;
+    float balloonDrawSize = 120.0f;
+    float balloonradius = balloonDrawSize * 0.4f;
 
     // reading highest score from file
     FILE *highestscorefile = fopen("highestscore.txt", "r");
@@ -162,7 +164,7 @@ int main(void)
         }
 
         // spawning balloons
-        float balloonradius = (float)(normalballoons[0].width) * 0.5f;
+        
         if (gameover == false)
         {
             currenttimer += dt;
@@ -326,22 +328,31 @@ int main(void)
         }
 
         // balloon drawing
+        //for custom size using drawtexture pro
+        
+        
+        
         for (int i = 0; i < MAXBALLOONS; i++)
         {
             if (balloons[i].active == true)
             {
+                Texture2D balloonTex;
                 if (balloons[i].danger == true)
                 {
-                    DrawTextureV(dangerballoon, (Vector2){balloons[i].position.x - dangerballoon.width / 2.0f, balloons[i].position.y - dangerballoon.height / 2.0f}, WHITE);
+                    balloonTex = dangerballoon;
                 }
                 else if (balloons[i].gold == true)
                 {
-                    DrawTextureV(specialballoon, (Vector2){balloons[i].position.x - specialballoon.width / 2.0f, balloons[i].position.y - specialballoon.height / 2.0f}, WHITE);
+                    balloonTex = specialballoon;
                 }
                 else
                 {
-                    DrawTextureV(normalballoons[balloons[i].index], (Vector2){balloons[i].position.x - normalballoons[balloons[i].index].width / 2.0f, balloons[i].position.y - normalballoons[balloons[i].index].height / 2.0f}, WHITE);
+                    balloonTex = normalballoons[balloons[i].index];
                 }
+                Rectangle loonSource = { 0, 0, (float)balloonTex.width, (float)balloonTex.height };
+                Rectangle loonDest = { balloons[i].position.x, balloons[i].position.y, balloonDrawSize, balloonDrawSize };
+                Vector2 loonOrigin = { balloonDrawSize / 2.0f, balloonDrawSize / 2.0f };
+                DrawTexturePro(balloonTex, loonSource, loonDest, loonOrigin, 0.0f, WHITE);
             }
         }
 
