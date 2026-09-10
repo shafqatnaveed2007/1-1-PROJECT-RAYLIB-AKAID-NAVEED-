@@ -58,6 +58,13 @@ int main(void)
         normalballoons[i] = LoadTexture(TextFormat("assets/sprites/normalballoon%d.png", i + 1));
     }
 
+    // Load Boy Animation Textures (boy01.png to boy10.png)
+    Texture2D boytextures[10];
+    for (int i = 0; i < 10; i++)
+    {
+        boytextures[i] = LoadTexture(TextFormat("assets/sprites/boy%02d-removebg-preview.png", i + 1));
+    }
+
     Font customfont = LoadFont("assets/fonts/Carnival Font.ttf");
 
     // init spawnpoints, arrow, balloons
@@ -86,6 +93,11 @@ int main(void)
     float pulldistance = 0.0f;
     float launchspeed = 0.0f;
 
+    // Boy animation variables
+    int boycurrentframe = 0;
+    float boyanimtimer = 0.0f;
+    float boyframeduration = 1.0f / 5.0f; // 5 FPS animation
+
     // Standard Balloon Size
     float balloonDrawSize = 140.0f;
     float balloonradius = balloonDrawSize * 0.4f;
@@ -112,6 +124,14 @@ int main(void)
     {
         float dt = GetFrameTime();
         UpdateMusicStream(bgmusic);
+
+        // Update boy animation frame
+        boyanimtimer += dt;
+        if (boyanimtimer >= boyframeduration)
+        {
+            boyanimtimer = 0.0f;
+            boycurrentframe = (boycurrentframe + 1) % 10;
+        }
 
         // bow and arrow settings
         Vector2 mouseposition = GetMousePosition();
@@ -330,6 +350,14 @@ int main(void)
         Rectangle bgdest = {0.0f, 0.0f, (float)WIDTH, (float)HEIGHT};
         DrawTexturePro(background, bgsource, bgdest, (Vector2){0.0f, 0.0f}, 0.0f, WHITE);
 
+        // draw boy sprite animation (hardcoded left of bow)
+        float boyWidth = 180.0f;
+        float boyHeight = 240.0f;
+        Vector2 boyPos = {80.0f, 500.0f};
+        Rectangle boySource = {0.0f, 0.0f, (float)boytextures[boycurrentframe].width, (float)boytextures[boycurrentframe].height};
+        Rectangle boyDest = {boyPos.x, boyPos.y, boyWidth, boyHeight};
+        DrawTexturePro(boytextures[boycurrentframe], boySource, boyDest, (Vector2){0.0f, 0.0f}, 0.0f, WHITE);
+
         // bow drawing
         float bowwidth = 240.0f;
         float bowheight = 240.0f;
@@ -444,6 +472,10 @@ int main(void)
     for (int i = 0; i < NORMALBALLONSNUM; i++)
     {
         UnloadTexture(normalballoons[i]);
+    }
+    for (int i = 0; i < 10; i++)
+    {
+        UnloadTexture(boytextures[i]);
     }
     UnloadTexture(arrowballoon);
     UnloadTexture(dangerballoon);
