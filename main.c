@@ -135,7 +135,7 @@ int main(void)
 
         // bow and arrow settings
         Vector2 mouseposition = GetMousePosition();
-        Vector2 arrowpivot = {260.0f, 630.0f};
+        Vector2 arrowpivot = {280.0f, 590.0f};
         float aimangle = 0.0f;
         Vector2 aimdirection = {1.0f, 0.0f};
         float maxpulldistance = 120.0f;
@@ -214,7 +214,7 @@ int main(void)
                         int roll = GetRandomValue(1, 100);
 
                         // 1. Danger Balloon Check
-                        if (score >= 0 && roll <= 40)
+                        if (score >= 200 && roll <= 40)
                         {
                             balloons[i].danger = true;
                             balloons[i].mustpop = false;
@@ -222,7 +222,7 @@ int main(void)
                             balloons[i].radius = dangerRadius;
                         }
                         // 2. Must Pop Balloon Check
-                        else if (score >= 0 && roll <= 65) // 25% chance (41 to 65)
+                        else if (score >= 100 && roll <= 65) // 25% chance (41 to 65)
                         {
                             balloons[i].danger = false;
                             balloons[i].mustpop = true;
@@ -351,16 +351,16 @@ int main(void)
         DrawTexturePro(background, bgsource, bgdest, (Vector2){0.0f, 0.0f}, 0.0f, WHITE);
 
         // draw boy sprite animation (hardcoded left of bow)
-        float boyWidth = 180.0f;
-        float boyHeight = 240.0f;
-        Vector2 boyPos = {80.0f, 500.0f};
+        float boyWidth = 396.0f;
+        float boyHeight = 528.0f;
+        Vector2 boyPos = {260.0f, 630.0f};
         Rectangle boySource = {0.0f, 0.0f, (float)boytextures[boycurrentframe].width, (float)boytextures[boycurrentframe].height};
         Rectangle boyDest = {boyPos.x, boyPos.y, boyWidth, boyHeight};
-        DrawTexturePro(boytextures[boycurrentframe], boySource, boyDest, (Vector2){0.0f, 0.0f}, 0.0f, WHITE);
+        DrawTexturePro(boytextures[boycurrentframe], boySource, boyDest, (Vector2){boyWidth / 2.0f, boyHeight / 2.0f}, 0.0f, WHITE);
 
         // bow drawing
-        float bowwidth = 240.0f;
-        float bowheight = 240.0f;
+        float bowwidth = 220.0f;
+        float bowheight = 220.0f;
         Rectangle bowsource = {0.0f, 0.0f, (float)bowimage.width, (float)bowimage.height};
         Rectangle bowdest = {arrowpivot.x, arrowpivot.y, bowwidth, bowheight};
         Vector2 boworigin = {bowwidth / 2.0f, bowheight / 2.0f};
@@ -435,12 +435,12 @@ int main(void)
         DrawTextEx(customfont, TextFormat("SCORE: %d", score), (Vector2){32, 23}, 42, 2, BLACK);
         DrawTextEx(customfont, TextFormat("SCORE: %d", score), (Vector2){30, 25}, 42, 2, WHITE);
         DrawTextEx(customfont, TextFormat("ARROWS: %d", arrowsleft), (Vector2){32, 73}, 42, 2, BLACK);
-        DrawTextEx(customfont, TextFormat("ARROWS: %d", arrowsleft), (Vector2){30, 75}, 42, 2, GOLD);
+        DrawTextEx(customfont, TextFormat("ARROWS: %d", arrowsleft), (Vector2){30, 75}, 42, 2, WHITE);
         DrawTextEx(customfont, TextFormat("HIGHEST SCORE: %d", highestscore), (Vector2){32, 123}, 42, 2, BLACK);
-        DrawTextEx(customfont, TextFormat("HIGHEST SCORE: %d", highestscore), (Vector2){30, 125}, 42, 2, GREEN);
+        DrawTextEx(customfont, TextFormat("HIGHEST SCORE: %d", highestscore), (Vector2){30, 125}, 42, 2, GOLD);
 
-        DrawTextEx(customfont, TextFormat("ANGLE: %.2f", -(aimangle * RAD2DEG)), (Vector2){30, 673}, 42, 2, BLACK);
-        DrawTextEx(customfont, TextFormat("LAUNCH SPEED: %.2f", launchspeed), (Vector2){30, 723}, 42, 2, BLACK);
+        DrawTextEx(customfont, TextFormat("ANGLE: %.2f", -(aimangle * RAD2DEG)), (Vector2){30, 673}, 42, 2, WHITE);
+        DrawTextEx(customfont, TextFormat("LAUNCH SPEED: %.2f", launchspeed), (Vector2){30, 723}, 42, 2, WHITE);
 
         // gameover screen
         if (gameover == true)
