@@ -26,11 +26,11 @@ typedef struct
     bool active;
     bool gold;
     bool danger;
+    bool mustpop;
     int index;
 } Balloon;
 
 int main(void)
-
 {
     InitWindow(WIDTH, HEIGHT, "HIT 'EM ALL");
     InitAudioDevice();
@@ -49,7 +49,8 @@ int main(void)
     Texture2D bowimage = LoadTexture("assets/sprites/bow.png");
     Texture2D arrowimage = LoadTexture("assets/sprites/arrow.png");
     Texture2D specialballoon = LoadTexture("assets/sprites/specialballoon.png");
-    Texture2D dangerballoon = LoadTexture("assets/sprites/dangerballoon (1).png");
+    Texture2D dangerballoon = LoadTexture("assets/sprites/dangerballoon.png");
+    Texture2D mustpopballoon = LoadTexture("assets/sprites/mustpopballoon.png");
 
     Texture2D normalballoons[NORMALBALLONSNUM];
     for (int i = 0; i < NORMALBALLONSNUM; i++)
@@ -84,8 +85,20 @@ int main(void)
     float spawninterval = 2.0f;
     float pulldistance = 0.0f;
     float launchspeed = 0.0f;
-    float balloonDrawSize = 120.0f;
+
+    // Standard Balloon Size
+    float balloonDrawSize = 140.0f;
     float balloonradius = balloonDrawSize * 0.4f;
+
+    // Independent size settings for Danger Balloon
+    float dangerDrawWidth = 300.0f;
+    float dangerDrawHeight = 164.0f;
+    float dangerRadius = dangerDrawWidth * 0.25f; // Radius derived from width
+
+    // Independent size settings for Must Pop Balloon (defined exactly like Danger Balloon)
+    float mustPopDrawWidth = 180.0f;
+    float mustPopDrawHeight = 180.0f;
+    float mustPopRadius = mustPopDrawWidth * 0.4f;
 
     // reading highest score from file
     FILE *highestscorefile = fopen("highestscore.txt", "r");
@@ -164,7 +177,6 @@ int main(void)
         }
 
         // spawning balloons
-        
         if (gameover == false)
         {
             currenttimer += dt;
@@ -178,18 +190,32 @@ int main(void)
                         balloons[i].position = spawnpoints[GetRandomValue(0, 4)];
                         balloons[i].speed = 150.0f;
                         balloons[i].active = true;
-                        balloons[i].radius = balloonradius;
 
-                        // Danger balloon check when score reaches 100
-                        if (score >= 10 && GetRandomValue(1, 100) <= 40)
+                        int roll = GetRandomValue(1, 100);
+
+                        // 1. Danger Balloon Check
+                        if (score >= 0 && roll <= 40)
                         {
                             balloons[i].danger = true;
+                            balloons[i].mustpop = false;
                             balloons[i].gold = false;
+                            balloons[i].radius = dangerRadius;
                         }
+                        // 2. Must Pop Balloon Check
+                        else if (score >= 0 && roll <= 65) // 25% chance (41 to 65)
+                        {
+                            balloons[i].danger = false;
+                            balloons[i].mustpop = true;
+                            balloons[i].gold = false;
+                            balloons[i].radius = mustPopRadius;
+                        }
+                        // 3. Normal / Gold Balloon Check
                         else
                         {
                             balloons[i].danger = false;
+                            balloons[i].mustpop = false;
                             balloons[i].gold = (GetRandomValue(1, 10) <= 2);
+                            balloons[i].radius = balloonradius;
                         }
 
                         balloons[i].index = GetRandomValue(0, 3);
@@ -199,20 +225,32 @@ int main(void)
             }
         }
 
-        // collision physics - gold balloons give 2 bonus arrows and are worth more than normal ones
+        // balloon movement & collision physics
         for (int i = 0; i < MAXBALLOONS; i++)
         {
             if (balloons[i].active == false)
                 continue;
+
             balloons[i].position.y -= dt * balloons[i].speed;
+
+            // Screen boundary check: balloon escaped past top
             if (balloons[i].position.y < -100.0f)
             {
                 balloons[i].active = false;
+
+                // Penalty: decrease ammo by 2 if a mustpop balloon escapes
+                if (balloons[i].mustpop == true)
+                {
+                    arrowsleft -= 2;
+                    if (arrowsleft < 0)
+                    {
+                        arrowsleft = 0;
+                    }
+                }
             }
 
             if (arrow.active == true && CheckCollisionCircles(arrow.position, arrow.radius, balloons[i].position, balloons[i].radius) == true)
             {
-                
                 balloons[i].active = false;
 
                 if (balloons[i].danger == true)
@@ -240,6 +278,7 @@ int main(void)
                 }
                 else
                 {
+                    // Handles standard popping for Normal and Must Pop balloons
                     score += 20;
                     PlaySound(popsound);
                 }
@@ -265,15 +304,14 @@ int main(void)
             }
         }
 
-        // restart - pulldistance is reset here so a leftover charge from before
-        // the game ended can't carry into the new round
+        // restart logic
         if (gameover == true && IsKeyPressed(KEY_R) == true)
         {
             gameover = false;
             arrowsleft = 10;
             score = 0;
             currenttimer = 0.0f;
-            launchspeed = 0.0;
+            launchspeed = 0.0f;
             pulldistance = 0.0f;
 
             arrow.active = false;
@@ -311,8 +349,7 @@ int main(void)
         float arrowheight = 45.0f;
         if (gameover == false && arrow.active == false && arrowsleft > 0)
         {
-
-            Vector2 restPos = Vector2Subtract(arrowpivot, Vector2Scale(aimdirection, pulldistance * 0.5f));//less pull of arrow compared to string
+            Vector2 restPos = Vector2Subtract(arrowpivot, Vector2Scale(aimdirection, pulldistance * 0.5f));
             Rectangle arrowsource = {0.0f, 0.0f, (float)arrowimage.width, (float)arrowimage.height};
             Rectangle arrowdest = {restPos.x, restPos.y, arrowwidth, arrowheight};
             Vector2 arroworigin = {arrowwidth / 2.0f, arrowheight / 2.0f};
@@ -328,31 +365,41 @@ int main(void)
         }
 
         // balloon drawing
-        //for custom size using drawtexture pro
-        
-        
-        
         for (int i = 0; i < MAXBALLOONS; i++)
         {
             if (balloons[i].active == true)
             {
-                Texture2D balloonTex;
                 if (balloons[i].danger == true)
                 {
-                    balloonTex = dangerballoon;
+                    Rectangle loonSource = {0, 0, (float)dangerballoon.width, (float)dangerballoon.height};
+                    Rectangle loonDest = {balloons[i].position.x, balloons[i].position.y, dangerDrawWidth, dangerDrawHeight};
+                    Vector2 loonOrigin = {dangerDrawWidth / 2.0f, dangerDrawHeight / 2.0f};
+                    DrawTexturePro(dangerballoon, loonSource, loonDest, loonOrigin, 0.0f, WHITE);
                 }
-                else if (balloons[i].gold == true)
+                else if (balloons[i].mustpop == true)
                 {
-                    balloonTex = specialballoon;
+                    Rectangle loonSource = {0, 0, (float)mustpopballoon.width, (float)mustpopballoon.height};
+                    Rectangle loonDest = {balloons[i].position.x, balloons[i].position.y, mustPopDrawWidth, mustPopDrawHeight};
+                    Vector2 loonOrigin = {mustPopDrawWidth / 2.0f, mustPopDrawHeight / 2.0f};
+                    DrawTexturePro(mustpopballoon, loonSource, loonDest, loonOrigin, 0.0f, WHITE);
                 }
                 else
                 {
-                    balloonTex = normalballoons[balloons[i].index];
+                    Texture2D balloonTex;
+                    if (balloons[i].gold)
+                    {
+                        balloonTex = specialballoon;
+                    }
+                    else
+                    {
+                        balloonTex = normalballoons[balloons[i].index];
+                    }
+
+                    Rectangle loonSource = {0, 0, (float)balloonTex.width, (float)balloonTex.height};
+                    Rectangle loonDest = {balloons[i].position.x, balloons[i].position.y, balloonDrawSize, balloonDrawSize};
+                    Vector2 loonOrigin = {balloonDrawSize / 2.0f, balloonDrawSize / 2.0f};
+                    DrawTexturePro(balloonTex, loonSource, loonDest, loonOrigin, 0.0f, WHITE);
                 }
-                Rectangle loonSource = { 0, 0, (float)balloonTex.width, (float)balloonTex.height };
-                Rectangle loonDest = { balloons[i].position.x, balloons[i].position.y, balloonDrawSize, balloonDrawSize };
-                Vector2 loonOrigin = { balloonDrawSize / 2.0f, balloonDrawSize / 2.0f };
-                DrawTexturePro(balloonTex, loonSource, loonDest, loonOrigin, 0.0f, WHITE);
             }
         }
 
@@ -361,20 +408,11 @@ int main(void)
         DrawTextEx(customfont, TextFormat("SCORE: %d", score), (Vector2){30, 25}, 42, 2, WHITE);
         DrawTextEx(customfont, TextFormat("ARROWS: %d", arrowsleft), (Vector2){32, 73}, 42, 2, BLACK);
         DrawTextEx(customfont, TextFormat("ARROWS: %d", arrowsleft), (Vector2){30, 75}, 42, 2, GOLD);
+        DrawTextEx(customfont, TextFormat("HIGHEST SCORE: %d", highestscore), (Vector2){32, 123}, 42, 2, BLACK);
+        DrawTextEx(customfont, TextFormat("HIGHEST SCORE: %d", highestscore), (Vector2){30, 125}, 42, 2, GREEN);
 
         DrawTextEx(customfont, TextFormat("ANGLE: %.2f", -(aimangle * RAD2DEG)), (Vector2){30, 673}, 42, 2, BLACK);
-
         DrawTextEx(customfont, TextFormat("LAUNCH SPEED: %.2f", launchspeed), (Vector2){30, 723}, 42, 2, BLACK);
-
-        // live power readout while pulling back the string - unlike LAUNCH SPEED above
-        // (which only updates once you actually fire), this updates in real time as
-        // pulldistance changes, so you can see the shot power before releasing
-        {
-            float currentPullRatio = pulldistance / maxpulldistance;
-            float currentPotentialSpeed = minarrowspeed + currentPullRatio * (maxarrowspeed - minarrowspeed);
-            DrawTextEx(customfont, TextFormat("POWER: %.2f", currentPotentialSpeed), (Vector2){32, 773 + 2}, 42, 2, BLACK);
-            DrawTextEx(customfont, TextFormat("POWER: %.2f", currentPotentialSpeed), (Vector2){30, 773}, 42, 2, WHITE);
-        }
 
         // gameover screen
         if (gameover == true)
@@ -383,7 +421,7 @@ int main(void)
             float gameoverheight = (float)gameovertexture.height * 1.8f;
             Rectangle gameoversource = {0.0f, 0.0f, (float)gameovertexture.width, (float)gameovertexture.height};
             Rectangle gameoverdest = {800.0f, 300.0f, gameoverwidth, gameoverheight};
-            Vector2 gameoverorigin = {gameoverwidth / 2.0, gameoverheight / 2.0};
+            Vector2 gameoverorigin = {gameoverwidth / 2.0f, gameoverheight / 2.0f};
             DrawTexturePro(gameovertexture, gameoversource, gameoverdest, gameoverorigin, 0.0f, WHITE);
 
             const char *restarttext = "PRESS R TO RESTART";
@@ -409,6 +447,7 @@ int main(void)
     }
     UnloadTexture(specialballoon);
     UnloadTexture(dangerballoon);
+    UnloadTexture(mustpopballoon);
     UnloadTexture(gameovertexture);
     UnloadTexture(bowimage);
     UnloadTexture(arrowimage);
