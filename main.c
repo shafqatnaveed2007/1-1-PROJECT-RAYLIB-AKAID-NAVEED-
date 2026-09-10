@@ -8,7 +8,7 @@
 #define HEIGHT 800
 #define NORMALBALLONSNUM 4
 #define SPAWNPOINTS 5
-#define MAXBALLOONS 10
+#define MAXBALLOONS 14
 
 typedef struct
 {
@@ -211,10 +211,14 @@ int main(void)
                         balloons[i].speed = 150.0f;
                         balloons[i].active = true;
 
+                        int dangerroll=(score>=200)? 40:0;
+                        int mustpoproll=(score>=100)? 15:0;
+
+
                         int roll = GetRandomValue(1, 100);
 
                         // 1. Danger Balloon Check
-                        if (score >= 200 && roll <= 40)
+                        if (roll <= dangerroll)
                         {
                             balloons[i].danger = true;
                             balloons[i].mustpop = false;
@@ -222,7 +226,7 @@ int main(void)
                             balloons[i].radius = dangerRadius;
                         }
                         // 2. Must Pop Balloon Check
-                        else if (score >= 100 && roll <= 65) // 25% chance (41 to 65)
+                        else if (roll <= dangerroll+mustpoproll) // 25% chance (41 to 65)
                         {
                             balloons[i].danger = false;
                             balloons[i].mustpop = true;
