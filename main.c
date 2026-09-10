@@ -48,7 +48,7 @@ int main(void)
     Texture2D gameovertexture = LoadTexture("assets/sprites/gameover.png");
     Texture2D bowimage = LoadTexture("assets/sprites/bow.png");
     Texture2D arrowimage = LoadTexture("assets/sprites/arrow.png");
-    Texture2D specialballoon = LoadTexture("assets/sprites/specialballoon.png");
+    Texture2D arrowballoon = LoadTexture("assets/sprites/arrowballoon.png");
     Texture2D dangerballoon = LoadTexture("assets/sprites/dangerballoon.png");
     Texture2D mustpopballoon = LoadTexture("assets/sprites/mustpopballoon.png");
 
@@ -388,7 +388,7 @@ int main(void)
                     Texture2D balloonTex;
                     if (balloons[i].gold)
                     {
-                        balloonTex = specialballoon;
+                        balloonTex = arrowballoon;
                     }
                     else
                     {
@@ -445,7 +445,7 @@ int main(void)
     {
         UnloadTexture(normalballoons[i]);
     }
-    UnloadTexture(specialballoon);
+    UnloadTexture(arrowballoon);
     UnloadTexture(dangerballoon);
     UnloadTexture(mustpopballoon);
     UnloadTexture(gameovertexture);
