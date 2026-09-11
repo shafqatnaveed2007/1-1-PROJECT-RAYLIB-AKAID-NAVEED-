@@ -9,6 +9,7 @@
 #define NORMALBALLONSNUM 4
 #define SPAWNPOINTS 5
 #define MAXBALLOONS 14
+#define MAXPOPUPS 6
 
 typedef struct
 {
@@ -29,6 +30,31 @@ typedef struct
     bool mustpop;
     int index;
 } Balloon;
+
+typedef struct
+{
+    Vector2 position;
+    int value;
+    float visibletime;
+    bool isactive;
+    
+} ScorePopUp;
+//Scorepopup function for calling it in case of normal, mustpop, danger loons
+void Popup(ScorePopUp scorepopup[], Vector2 pos, int score)
+{
+    for(int i=0; i<MAXPOPUPS; i++)
+    {
+        if(scorepopup[i].isactive==false)
+        {
+            scorepopup[i].isactive=true;
+            scorepopup[i].position=pos;
+            scorepopup[i].value=score;
+            scorepopup[i].visibletime=1.0f;
+            break;
+        }
+    }
+}
+
 
 int main(void)
 {
@@ -111,6 +137,15 @@ int main(void)
     float mustPopDrawWidth = 180.0f;
     float mustPopDrawHeight = 180.0f;
     float mustPopRadius = mustPopDrawWidth * 0.4f;
+    //POPUP SCORE array
+    ScorePopUp scorepopup[MAXPOPUPS]={0};
+
+    
+
+
+
+
+
 
     // reading highest score from file
     FILE *highestscorefile = fopen("highestscore.txt", "r");
@@ -248,6 +283,20 @@ int main(void)
                 }
             }
         }
+        //scorepopups update
+        for(int i=0; i<MAXPOPUPS; i++)
+        {
+            if(scorepopup[i].isactive)
+            {
+                scorepopup[i].visibletime -=dt;
+                scorepopup[i].position.y-=20.0f*dt;
+                if(scorepopup[i].visibletime<=0)
+                {
+                    scorepopup[i].isactive=false;
+                }
+
+            }
+        }
 
         // balloon movement & collision physics
         for (int i = 0; i < MAXBALLOONS; i++)
@@ -282,7 +331,6 @@ int main(void)
                     gameover = true;
                     StopMusicStream(bgmusic);
                     PlaySound(gameoversound);
-
                     if (score > highestscore)
                     {
                         highestscore = score;
@@ -299,11 +347,13 @@ int main(void)
                     arrowsleft += 2;
                     score += 30;
                     PlaySound(popsound);
+                    Popup(scorepopup, balloons[i].position, 30);
                 }
                 else
                 {
                     // Handles standard popping for Normal and Must Pop balloons
                     score += 20;
+                    Popup(scorepopup, balloons[i].position, 20);
                     PlaySound(popsound);
                 }
             }
@@ -445,6 +495,16 @@ int main(void)
 
         DrawTextEx(customfont, TextFormat("ANGLE: %.2f", -(aimangle * RAD2DEG)), (Vector2){30, 673}, 42, 2, WHITE);
         DrawTextEx(customfont, TextFormat("LAUNCH SPEED: %.2f", launchspeed), (Vector2){30, 723}, 42, 2, WHITE);
+        //drawing scorepopups
+        for(int i=0; i<MAXPOPUPS; i++)
+        {
+            if(scorepopup[i].isactive)
+            {
+                DrawTextEx(customfont, TextFormat("+%d", scorepopup[i].value), scorepopup[i].position, 42, 2, BLACK);
+                DrawTextEx(customfont, TextFormat("+%d", scorepopup[i].value), (Vector2){scorepopup[i].position.x+2, scorepopup[i].position.y+2}, 42, 2, GOLD);
+               
+            }
+        }
 
         // gameover screen
         if (gameover == true)
