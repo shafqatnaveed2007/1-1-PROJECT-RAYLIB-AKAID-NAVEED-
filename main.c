@@ -10,6 +10,7 @@
 #define SPAWNPOINTS 5
 #define MAXBALLOONS 14
 #define MAXPOPUPS 6
+#define MAXARROWPOPUPS 6
 
 typedef struct
 {
@@ -37,24 +38,47 @@ typedef struct
     int value;
     float visibletime;
     bool isactive;
-    
 } ScorePopUp;
-//Scorepopup function for calling it in case of normal, mustpop, danger loons
+
+typedef struct
+{
+    Vector2 position;
+    int value;
+    float visibletime;
+    bool isactive;
+} ArrowPopUp;
+
+// Scorepopup function for calling it in case of normal, mustpop, danger loons
 void Popup(ScorePopUp scorepopup[], Vector2 pos, int score)
 {
-    for(int i=0; i<MAXPOPUPS; i++)
+    for (int i = 0; i < MAXPOPUPS; i++)
     {
-        if(scorepopup[i].isactive==false)
+        if (scorepopup[i].isactive == false)
         {
-            scorepopup[i].isactive=true;
-            scorepopup[i].position=pos;
-            scorepopup[i].value=score;
-            scorepopup[i].visibletime=1.0f;
+            scorepopup[i].isactive = true;
+            scorepopup[i].position = pos;
+            scorepopup[i].value = score;
+            scorepopup[i].visibletime = 1.0f;
             break;
         }
     }
 }
 
+// Arrowpopup function for calling it when a golden balloon is popped or mustpop balloon escapes
+void ArrowPopup(ArrowPopUp arrowpopup[], Vector2 pos, int arrows)
+{
+    for (int i = 0; i < MAXARROWPOPUPS; i++)
+    {
+        if (arrowpopup[i].isactive == false)
+        {
+            arrowpopup[i].isactive = true;
+            arrowpopup[i].position = pos;
+            arrowpopup[i].value = arrows;
+            arrowpopup[i].visibletime = 1.0f;
+            break;
+        }
+    }
+}
 
 int main(void)
 {
@@ -137,15 +161,10 @@ int main(void)
     float mustPopDrawWidth = 180.0f;
     float mustPopDrawHeight = 180.0f;
     float mustPopRadius = mustPopDrawWidth * 0.4f;
-    //POPUP SCORE array
-    ScorePopUp scorepopup[MAXPOPUPS]={0};
 
-    
-
-
-
-
-
+    // POPUP SCORE & ARROW array
+    ScorePopUp scorepopup[MAXPOPUPS] = {0};
+    ArrowPopUp arrowpopup[MAXARROWPOPUPS] = {0};
 
     // reading highest score from file
     FILE *highestscorefile = fopen("highestscore.txt", "r");
@@ -246,9 +265,8 @@ int main(void)
                         balloons[i].speed = 150.0f;
                         balloons[i].active = true;
 
-                        int dangerroll=(score>=200)? 40:0;
-                        int mustpoproll=(score>=100)? 15:0;
-
+                        int dangerroll = (score >= 200) ? 40 : 0;
+                        int mustpoproll = (score >= 100) ? 15 : 0;
 
                         int roll = GetRandomValue(1, 100);
 
@@ -261,7 +279,7 @@ int main(void)
                             balloons[i].radius = dangerRadius;
                         }
                         // 2. Must Pop Balloon Check
-                        else if (roll <= dangerroll+mustpoproll) // 25% chance (41 to 65)
+                        else if (roll <= dangerroll + mustpoproll) // 25% chance (41 to 65)
                         {
                             balloons[i].danger = false;
                             balloons[i].mustpop = true;
@@ -283,18 +301,32 @@ int main(void)
                 }
             }
         }
-        //scorepopups update
-        for(int i=0; i<MAXPOPUPS; i++)
-        {
-            if(scorepopup[i].isactive)
-            {
-                scorepopup[i].visibletime -=dt;
-                scorepopup[i].position.y-=20.0f*dt;
-                if(scorepopup[i].visibletime<=0)
-                {
-                    scorepopup[i].isactive=false;
-                }
 
+        // scorepopups update
+        for (int i = 0; i < MAXPOPUPS; i++)
+        {
+            if (scorepopup[i].isactive)
+            {
+                scorepopup[i].visibletime -= dt;
+                scorepopup[i].position.y -= 20.0f * dt;
+                if (scorepopup[i].visibletime <= 0)
+                {
+                    scorepopup[i].isactive = false;
+                }
+            }
+        }
+
+        // arrowpopups update
+        for (int i = 0; i < MAXARROWPOPUPS; i++)
+        {
+            if (arrowpopup[i].isactive)
+            {
+                arrowpopup[i].visibletime -= dt;
+                arrowpopup[i].position.y -= 20.0f * dt;
+                if (arrowpopup[i].visibletime <= 0)
+                {
+                    arrowpopup[i].isactive = false;
+                }
             }
         }
 
@@ -319,6 +351,9 @@ int main(void)
                     {
                         arrowsleft = 0;
                     }
+
+                    // Trigger red penalty popup near top of screen
+                    ArrowPopup(arrowpopup, (Vector2){balloons[i].position.x, 40.0f}, -2);
                 }
             }
 
@@ -345,15 +380,16 @@ int main(void)
                 else if (balloons[i].gold == true)
                 {
                     arrowsleft += 2;
-                    score += 30;
+                    score += 10;
                     PlaySound(popsound);
-                    Popup(scorepopup, balloons[i].position, 30);
+                    Popup(scorepopup, balloons[i].position, 10);
+                    ArrowPopup(arrowpopup, (Vector2){balloons[i].position.x, balloons[i].position.y - 40.0f}, 2);
                 }
                 else
                 {
                     // Handles standard popping for Normal and Must Pop balloons
-                    score += 20;
-                    Popup(scorepopup, balloons[i].position, 20);
+                    score += 10;
+                    Popup(scorepopup, balloons[i].position, 10);
                     PlaySound(popsound);
                 }
             }
@@ -407,7 +443,7 @@ int main(void)
         // draw boy sprite animation (hardcoded left of bow)
         float boyWidth = 396.0f;
         float boyHeight = 528.0f;
-        Vector2 boyPos = {260.0f, 630.0f};
+        Vector2 boyPos = {240.0f, 630.0f};
         Rectangle boySource = {0.0f, 0.0f, (float)boytextures[boycurrentframe].width, (float)boytextures[boycurrentframe].height};
         Rectangle boyDest = {boyPos.x, boyPos.y, boyWidth, boyHeight};
         DrawTexturePro(boytextures[boycurrentframe], boySource, boyDest, (Vector2){boyWidth / 2.0f, boyHeight / 2.0f}, 0.0f, WHITE);
@@ -495,14 +531,29 @@ int main(void)
 
         DrawTextEx(customfont, TextFormat("ANGLE: %.2f", -(aimangle * RAD2DEG)), (Vector2){30, 673}, 42, 2, WHITE);
         DrawTextEx(customfont, TextFormat("LAUNCH SPEED: %.2f", launchspeed), (Vector2){30, 723}, 42, 2, WHITE);
-        //drawing scorepopups
-        for(int i=0; i<MAXPOPUPS; i++)
+
+        // drawing scorepopups
+        for (int i = 0; i < MAXPOPUPS; i++)
         {
-            if(scorepopup[i].isactive)
+            if (scorepopup[i].isactive)
             {
-                DrawTextEx(customfont, TextFormat("+%d", scorepopup[i].value), scorepopup[i].position, 42, 2, BLACK);
-                DrawTextEx(customfont, TextFormat("+%d", scorepopup[i].value), (Vector2){scorepopup[i].position.x+2, scorepopup[i].position.y+2}, 42, 2, GOLD);
-               
+                DrawTextEx(customfont, TextFormat("+%d", scorepopup[i].value), scorepopup[i].position, 65, 2, BLACK);
+                DrawTextEx(customfont, TextFormat("+%d", scorepopup[i].value), (Vector2){scorepopup[i].position.x + 2, scorepopup[i].position.y + 2}, 65, 2, GOLD);
+            }
+        }
+
+        // drawing arrowpopups
+        for (int i = 0; i < MAXARROWPOPUPS; i++)
+        {
+            if (arrowpopup[i].isactive)
+            {
+                Color popupColor = (arrowpopup[i].value < 0) ? RED : GREEN;
+                const char *popupText = (arrowpopup[i].value < 0)
+                                            ? TextFormat("%d ARROWS", arrowpopup[i].value)
+                                            : TextFormat("+%d ARROWS", arrowpopup[i].value);
+
+                DrawTextEx(customfont, popupText, arrowpopup[i].position, 50, 2, BLACK);
+                DrawTextEx(customfont, popupText, (Vector2){arrowpopup[i].position.x + 2, arrowpopup[i].position.y + 2}, 50, 2, popupColor);
             }
         }
 
