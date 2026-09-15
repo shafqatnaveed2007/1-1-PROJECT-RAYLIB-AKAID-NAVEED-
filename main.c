@@ -115,7 +115,7 @@ int main(void)
         boytextures[i] = LoadTexture(TextFormat("assets/sprites/boy%02d-removebg-preview.png", i + 1));
     }
 
-    Font customfont = LoadFont("assets/fonts/Carnival Font.ttf");
+    Font customfont = LoadFontEx("assets/fonts/Carnival Font.ttf", 96, NULL, 0);
 
     // init spawnpoints, arrow, balloons
     Vector2 spawnpoints[SPAWNPOINTS];
