@@ -1,17 +1,20 @@
+// headers
 #include "raylib.h"
 #include "raymath.h"
 #include <stdio.h>
 #include <math.h>
 #include <stdbool.h>
 
+// macros
 #define WIDTH 1600
 #define HEIGHT 800
 #define NORMALBALLONSNUM 4
 #define SPAWNPOINTS 5
-#define MAXBALLOONS 14
-#define MAXPOPUPS 6
-#define MAXARROWPOPUPS 6
+#define MAXBALLOONS 10
+#define MAXPOPUPS 5
+#define MAXARROWPOPUPS 5
 
+// enum for gamestate
 typedef enum
 {
     GAME_MENU,
@@ -20,6 +23,7 @@ typedef enum
     GAME_HIGHSCORE
 } GameState;
 
+// structs for arrow, ballloons and popups
 typedef struct
 {
     Vector2 position;
@@ -45,7 +49,7 @@ typedef struct
     Vector2 position;
     int value;
     float visibletime;
-    bool isactive;
+    bool active;
 } ScorePopUp;
 
 typedef struct
@@ -53,17 +57,17 @@ typedef struct
     Vector2 position;
     int value;
     float visibletime;
-    bool isactive;
+    bool active;
 } ArrowPopUp;
 
-// Scorepopup function for calling it in case of normal, mustpop, danger loons
+// Scorepopup and arrowpopup functions
 void Popup(ScorePopUp scorepopup[], Vector2 pos, int score)
 {
     for (int i = 0; i < MAXPOPUPS; i++)
     {
-        if (scorepopup[i].isactive == false)
+        if (scorepopup[i].active == false)
         {
-            scorepopup[i].isactive = true;
+            scorepopup[i].active = true;
             scorepopup[i].position = pos;
             scorepopup[i].value = score;
             scorepopup[i].visibletime = 1.0f;
@@ -71,15 +75,13 @@ void Popup(ScorePopUp scorepopup[], Vector2 pos, int score)
         }
     }
 }
-
-// Arrowpopup function for calling it when a golden balloon is popped or mustpop balloon escapes
 void ArrowPopup(ArrowPopUp arrowpopup[], Vector2 pos, int arrows)
 {
     for (int i = 0; i < MAXARROWPOPUPS; i++)
     {
-        if (arrowpopup[i].isactive == false)
+        if (arrowpopup[i].active == false)
         {
-            arrowpopup[i].isactive = true;
+            arrowpopup[i].active = true;
             arrowpopup[i].position = pos;
             arrowpopup[i].value = arrows;
             arrowpopup[i].visibletime = 1.0f;
@@ -114,20 +116,12 @@ int main(void)
     Texture2D arrowballoon = LoadTexture("assets/sprites/arrowballoon.png");
     Texture2D dangerballoon = LoadTexture("assets/sprites/dangerballoon.png");
     Texture2D mustpopballoon = LoadTexture("assets/sprites/mustpopballoon.png");
-
     Texture2D normalballoons[NORMALBALLONSNUM];
     for (int i = 0; i < NORMALBALLONSNUM; i++)
     {
         normalballoons[i] = LoadTexture(TextFormat("assets/sprites/normalballoon%d.png", i + 1));
     }
-
-    // Load Boy Animation Textures (boy01.png to boy10.png)
-    Texture2D boytextures[10];
-    for (int i = 0; i < 10; i++)
-    {
-        boytextures[i] = LoadTexture(TextFormat("assets/sprites/boy%02d-removebg-preview.png", i + 1));
-    }
-
+    Texture2D boytexture = LoadTexture("assets/sprites/boy.png");
     Font customfont = LoadFontEx("assets/fonts/Carnival Font.ttf", 96, NULL, 0);
 
     // init spawnpoints, arrow, balloons
@@ -148,41 +142,34 @@ int main(void)
     // init game variables
     int score = 0;
     int highestscore = 0;
-    bool gameover = false;
     int arrowsleft = 10;
     float gravity = 1000.0f;
     float currenttimer = 0.0f;
     float spawninterval = 2.0f;
     float pulldistance = 0.0f;
     float launchspeed = 0.0f;
+    bool gameover = false;
 
-    // Menu transition delay timer
-    float menuTransitionTimer = 0.0f;
+    float menutimer = 0.0f;
 
-    // Boy animation variables
-    int boycurrentframe = 0;
-    float boyanimtimer = 0.0f;
-    float boyframeduration = 1.0f / 5.0f; // 5 FPS animation
+    // balloon sizes
+    float normalballoonwidth = 140.0f;
+    float normalballoonheight = 140.0f;
+    float balloonradius = normalballoonwidth * 0.4f;
 
-    // Standard Balloon Size
-    float balloonDrawSize = 140.0f;
-    float balloonradius = balloonDrawSize * 0.4f;
+    float dangerwidth = 300.0f;
+    float dangerheight = 164.0f;
+    float dangerradius = dangerwidth * 0.25f;
 
-    // Independent size settings for Danger Balloon
-    float dangerDrawWidth = 300.0f;
-    float dangerDrawHeight = 164.0f;
-    float dangerRadius = dangerDrawWidth * 0.25f;
+    float mustpopwidth = 180.0f;
+    float mustpopheight = 180.0f;
+    float mustpopradius = mustpopwidth * 0.4f;
 
-    // Independent size settings for Must Pop Balloon
-    float mustPopDrawWidth = 180.0f;
-    float mustPopDrawHeight = 180.0f;
-    float mustPopRadius = mustPopDrawWidth * 0.4f;
-
-    // POPUP SCORE & ARROW array
+    // arrays for popups
     ScorePopUp scorepopup[MAXPOPUPS] = {0};
     ArrowPopUp arrowpopup[MAXARROWPOPUPS] = {0};
-    //buttons
-    Rectangle backbuttonrec={WIDTH/2.0f + 400.0f - 60.0f, HEIGHT/2.0f - 250.0f + 10.0f, 40.0f, 40.0f};
+    // buttons
+    Rectangle backbuttonrec = {WIDTH / 2.0f + 400.0f - 60.0f, HEIGHT / 2.0f - 250.0f + 10.0f, 40.0f, 40.0f};
 
     // reading highest score from file
     FILE *highestscorefile = fopen("highestscore.txt", "r");
@@ -192,8 +179,8 @@ int main(void)
         fclose(highestscorefile);
     }
 
-    //some colors
-    Color warmBrown = (Color){ 60, 38, 22, 255 };
+    // some colors
+    Color warmBrown = (Color){60, 38, 22, 255};
 
     while (!WindowShouldClose())
     {
@@ -228,10 +215,10 @@ int main(void)
             }
 
             // Handle transition delay timer
-            if (menuTransitionTimer > 0.0f)
+            if (menutimer > 0.0f)
             {
-                menuTransitionTimer -= dt;
-                if (menuTransitionTimer <= 0.0f)
+                menutimer -= dt;
+                if (menutimer <= 0.0f)
                 {
                     currentstate = GAME_PLAYING;
                 }
@@ -241,27 +228,24 @@ int main(void)
                 if (CheckCollisionPointRec(mouseposition, startButtonRec))
                 {
                     PlaySound(clicksound);
-                    menuTransitionTimer = 1.0f; // 1 second delay before switching to gameplay
+                    menutimer = 1.0f; // 1 second delay before switching to gameplay
                 }
                 else if (CheckCollisionPointRec(mouseposition, exitButtonRec))
                 {
                     PlaySound(clicksound);
                     break;
                 }
-                else if(CheckCollisionPointRec(mouseposition, howToPlayButtonRec))
+                else if (CheckCollisionPointRec(mouseposition, howToPlayButtonRec))
                 {
                     PlaySound(clicksound);
-                    
-                    currentstate=GAME_HOWTOPLAY;
 
+                    currentstate = GAME_HOWTOPLAY;
                 }
-                else if(CheckCollisionPointRec(mouseposition, highscoreButtonRec))
+                else if (CheckCollisionPointRec(mouseposition, highscoreButtonRec))
                 {
                     PlaySound(clicksound);
-                    currentstate=GAME_HIGHSCORE;
-
+                    currentstate = GAME_HIGHSCORE;
                 }
-
             }
         }
         else if (currentstate == GAME_PLAYING)
@@ -354,14 +338,14 @@ int main(void)
                                 balloons[i].danger = true;
                                 balloons[i].mustpop = false;
                                 balloons[i].gold = false;
-                                balloons[i].radius = dangerRadius;
+                                balloons[i].radius = dangerradius;
                             }
                             else if (roll <= dangerroll + mustpoproll)
                             {
                                 balloons[i].danger = false;
                                 balloons[i].mustpop = true;
                                 balloons[i].gold = false;
-                                balloons[i].radius = mustPopRadius;
+                                balloons[i].radius = mustpopradius;
                             }
                             else
                             {
@@ -381,13 +365,13 @@ int main(void)
             // scorepopups update
             for (int i = 0; i < MAXPOPUPS; i++)
             {
-                if (scorepopup[i].isactive)
+                if (scorepopup[i].active)
                 {
                     scorepopup[i].visibletime -= dt;
                     scorepopup[i].position.y -= 20.0f * dt;
                     if (scorepopup[i].visibletime <= 0)
                     {
-                        scorepopup[i].isactive = false;
+                        scorepopup[i].active = false;
                     }
                 }
             }
@@ -395,13 +379,13 @@ int main(void)
             // arrowpopups update
             for (int i = 0; i < MAXARROWPOPUPS; i++)
             {
-                if (arrowpopup[i].isactive)
+                if (arrowpopup[i].active)
                 {
                     arrowpopup[i].visibletime -= dt;
                     arrowpopup[i].position.y -= 20.0f * dt;
                     if (arrowpopup[i].visibletime <= 0)
                     {
-                        arrowpopup[i].isactive = false;
+                        arrowpopup[i].active = false;
                     }
                 }
             }
@@ -501,32 +485,30 @@ int main(void)
                 PlayMusicStream(bgmusic);
             }
         }
-        else if(currentstate==GAME_HOWTOPLAY)
+        else if (currentstate == GAME_HOWTOPLAY)
         {
             SetMouseCursor(MOUSE_CURSOR_DEFAULT);
-            if(CheckCollisionPointRec(mouseposition, backbuttonrec))
+            if (CheckCollisionPointRec(mouseposition, backbuttonrec))
             {
                 SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
-
             }
-            if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mouseposition, backbuttonrec))
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mouseposition, backbuttonrec))
             {
                 PlaySound(clicksound);
-                currentstate=GAME_MENU;
+                currentstate = GAME_MENU;
             }
         }
-        else if(currentstate==GAME_HIGHSCORE)
+        else if (currentstate == GAME_HIGHSCORE)
         {
             SetMouseCursor(MOUSE_CURSOR_DEFAULT);
-            if(CheckCollisionPointRec(mouseposition, backbuttonrec))
+            if (CheckCollisionPointRec(mouseposition, backbuttonrec))
             {
                 SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
-
             }
-            if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mouseposition, backbuttonrec))
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mouseposition, backbuttonrec))
             {
                 PlaySound(clicksound);
-                currentstate=GAME_MENU;
+                currentstate = GAME_MENU;
             }
         }
 
@@ -558,21 +540,21 @@ int main(void)
             DrawTextEx(customfont, "HIGHEST SCORE", (Vector2){WIDTH / 2.0f - 130.0f, 490.0f}, 48, 2, highColor);
             DrawTextEx(customfont, "EXIT", (Vector2){WIDTH / 2.0f - 40.0f, 560.0f}, 48, 2, exitColor);
         }
-        else if(currentstate == GAME_HOWTOPLAY)
+        else if (currentstate == GAME_HOWTOPLAY)
         {
             Rectangle menusrcrec = {0.0f, 0.0f, (float)menubackground.width, (float)menubackground.height};
             Rectangle menudestrec = {0.0f, 0.0f, (float)WIDTH, (float)HEIGHT};
             DrawTexturePro(menubackground, menusrcrec, menudestrec, (Vector2){0.0f, 0.0f}, 0.0f, WHITE);
 
-            Color dimOverlay = { 0, 0, 0, 150 };  // black, roughly 60% opacity
+            Color dimOverlay = {0, 0, 0, 150}; // black, roughly 60% opacity
             DrawRectangle(0, 0, WIDTH, HEIGHT, dimOverlay);
-            Rectangle panelrec={WIDTH/2-400, HEIGHT/2-250, 800, 500};
+            Rectangle panelrec = {WIDTH / 2 - 400, HEIGHT / 2 - 250, 800, 500};
             DrawRectangleRounded(panelrec, 0.05f, 8, (Color){245, 235, 210, 255});
-            //backbutton drawing
-            
-            Color backbuttoncolor=CheckCollisionPointRec(mouseposition, backbuttonrec)? GOLD:BLACK;
-            DrawTextEx(customfont, "X", (Vector2){WIDTH/2.0f + 400.0f - 50.0f, HEIGHT/2.0f - 250.0f + 15.0f}, 32, 2, backbuttoncolor);
-            const char*instructions[]={
+            // backbutton drawing
+
+            Color backbuttoncolor = CheckCollisionPointRec(mouseposition, backbuttonrec) ? GOLD : BLACK;
+            DrawTextEx(customfont, "X", (Vector2){WIDTH / 2.0f + 400.0f - 50.0f, HEIGHT / 2.0f - 250.0f + 15.0f}, 32, 2, backbuttoncolor);
+            const char *instructions[] = {
                 "AIM your bow by moving the mouse.",
                 "Click and HOLD to pull back the string.",
                 "RELEASE to fire your arrow!",
@@ -582,29 +564,28 @@ int main(void)
                 "HIT balloons must be popped before they escape!",
                 "DANGER balloons end your game instantly!",
                 "",
-                "You start with 10 arrows. Good luck!"
-            };
-            int linenum=sizeof(instructions)/sizeof(instructions[0]);
-            for(int i=0; i<linenum;i++)
+                "You start with 10 arrows. Good luck!"};
+            int linenum = sizeof(instructions) / sizeof(instructions[0]);
+            for (int i = 0; i < linenum; i++)
             {
-                float lineposy=HEIGHT/2.0f - 200.0f + (i * 40.0f);
-                DrawTextEx(customfont, instructions[i], (Vector2){WIDTH/2.0f - 380.0f, lineposy}, 32, 2, warmBrown);
+                float lineposy = HEIGHT / 2.0f - 200.0f + (i * 40.0f);
+                DrawTextEx(customfont, instructions[i], (Vector2){WIDTH / 2.0f - 380.0f, lineposy}, 32, 2, warmBrown);
             }
         }
-        else if(currentstate == GAME_HIGHSCORE)
+        else if (currentstate == GAME_HIGHSCORE)
         {
             Rectangle menusrcrec = {0.0f, 0.0f, (float)menubackground.width, (float)menubackground.height};
             Rectangle menudestrec = {0.0f, 0.0f, (float)WIDTH, (float)HEIGHT};
             DrawTexturePro(menubackground, menusrcrec, menudestrec, (Vector2){0.0f, 0.0f}, 0.0f, WHITE);
 
-            Color dimOverlay = { 0, 0, 0, 150 };  // black, roughly 60% opacity
+            Color dimOverlay = {0, 0, 0, 150}; // black, roughly 60% opacity
             DrawRectangle(0, 0, WIDTH, HEIGHT, dimOverlay);
-            Rectangle panelrec={WIDTH/2-400, HEIGHT/2-250, 800, 500};
+            Rectangle panelrec = {WIDTH / 2 - 400, HEIGHT / 2 - 250, 800, 500};
             DrawRectangleRounded(panelrec, 0.05f, 8, (Color){245, 235, 210, 255});
-            //backbutton drawing
-            
-            Color backbuttoncolor=CheckCollisionPointRec(mouseposition, backbuttonrec)? GOLD:BLACK;
-            DrawTextEx(customfont, "X", (Vector2){WIDTH/2.0f + 400.0f - 50.0f, HEIGHT/2.0f - 250.0f + 15.0f}, 32, 2, backbuttoncolor);
+            // backbutton drawing
+
+            Color backbuttoncolor = CheckCollisionPointRec(mouseposition, backbuttonrec) ? GOLD : BLACK;
+            DrawTextEx(customfont, "X", (Vector2){WIDTH / 2.0f + 400.0f - 50.0f, HEIGHT / 2.0f - 250.0f + 15.0f}, 32, 2, backbuttoncolor);
         }
         else if (currentstate == GAME_PLAYING)
         {
@@ -673,15 +654,15 @@ int main(void)
                     if (balloons[i].danger == true)
                     {
                         Rectangle loonSource = {0, 0, (float)dangerballoon.width, (float)dangerballoon.height};
-                        Rectangle loonDest = {balloons[i].position.x, balloons[i].position.y, dangerDrawWidth, dangerDrawHeight};
-                        Vector2 loonOrigin = {dangerDrawWidth / 2.0f, dangerDrawHeight / 2.0f};
+                        Rectangle loonDest = {balloons[i].position.x, balloons[i].position.y, dangerwidth, dangerheight};
+                        Vector2 loonOrigin = {dangerwidth / 2.0f, dangerheight / 2.0f};
                         DrawTexturePro(dangerballoon, loonSource, loonDest, loonOrigin, 0.0f, WHITE);
                     }
                     else if (balloons[i].mustpop == true)
                     {
                         Rectangle loonSource = {0, 0, (float)mustpopballoon.width, (float)mustpopballoon.height};
-                        Rectangle loonDest = {balloons[i].position.x, balloons[i].position.y, mustPopDrawWidth, mustPopDrawHeight};
-                        Vector2 loonOrigin = {mustPopDrawWidth / 2.0f, mustPopDrawHeight / 2.0f};
+                        Rectangle loonDest = {balloons[i].position.x, balloons[i].position.y, mustpopwidth, mustpopheight};
+                        Vector2 loonOrigin = {mustpopwidth / 2.0f, mustpopheight / 2.0f};
                         DrawTexturePro(mustpopballoon, loonSource, loonDest, loonOrigin, 0.0f, WHITE);
                     }
                     else
@@ -693,8 +674,8 @@ int main(void)
                             balloonTex = normalballoons[balloons[i].index];
 
                         Rectangle loonSource = {0, 0, (float)balloonTex.width, (float)balloonTex.height};
-                        Rectangle loonDest = {balloons[i].position.x, balloons[i].position.y, balloonDrawSize, balloonDrawSize};
-                        Vector2 loonOrigin = {balloonDrawSize / 2.0f, balloonDrawSize / 2.0f};
+                        Rectangle loonDest = {balloons[i].position.x, balloons[i].position.y, normalballoonwidth, normalballoonwidth};
+                        Vector2 loonOrigin = {normalballoonwidth / 2.0f, normalballoonwidth / 2.0f};
                         DrawTexturePro(balloonTex, loonSource, loonDest, loonOrigin, 0.0f, WHITE);
                     }
                 }
@@ -714,7 +695,7 @@ int main(void)
             // drawing scorepopups
             for (int i = 0; i < MAXPOPUPS; i++)
             {
-                if (scorepopup[i].isactive)
+                if (scorepopup[i].active)
                 {
                     DrawTextEx(customfont, TextFormat("+%d", scorepopup[i].value), scorepopup[i].position, 65, 2, BLACK);
                     DrawTextEx(customfont, TextFormat("+%d", scorepopup[i].value), (Vector2){scorepopup[i].position.x + 2, scorepopup[i].position.y + 2}, 65, 2, GOLD);
@@ -724,7 +705,7 @@ int main(void)
             // drawing arrowpopups
             for (int i = 0; i < MAXARROWPOPUPS; i++)
             {
-                if (arrowpopup[i].isactive)
+                if (arrowpopup[i].active)
                 {
                     Color popupColor = (arrowpopup[i].value < 0) ? RED : GREEN;
                     const char *popupText = (arrowpopup[i].value < 0) ? TextFormat("%d ARROWS", arrowpopup[i].value) : TextFormat("+%d ARROWS", arrowpopup[i].value);
@@ -761,17 +742,15 @@ int main(void)
         EndDrawing();
     }
 
-    // cleanup
+    // all unloading
     UnloadTexture(menubackground);
     UnloadTexture(background);
     for (int i = 0; i < NORMALBALLONSNUM; i++)
     {
         UnloadTexture(normalballoons[i]);
     }
-    for (int i = 0; i < 10; i++)
-    {
-        UnloadTexture(boytextures[i]);
-    }
+
+    UnloadTexture(boytexture);
     UnloadTexture(arrowballoon);
     UnloadTexture(dangerballoon);
     UnloadTexture(mustpopballoon);
