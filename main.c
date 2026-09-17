@@ -1,9 +1,11 @@
+// headers
 #include "raylib.h"
 #include "raymath.h"
 #include <stdio.h>
 #include <math.h>
 #include <stdbool.h>
 
+// macros
 #define WIDTH 1600
 #define HEIGHT 800
 #define NORMALBALLONSNUM 4
@@ -12,6 +14,7 @@
 #define MAXBALLOONPOPUPS 3
 #define MAXARROWPOPUPS 3
 
+// enum for menu
 typedef enum
 {
     GAME_MENU,
@@ -20,6 +23,7 @@ typedef enum
     GAME_HIGHSCORE
 } GameState;
 
+// structs for balloon, arrow, popups
 typedef struct
 {
     Vector2 position;
@@ -56,7 +60,8 @@ typedef struct
     bool active;
 } ArrowPopUp;
 
-void Popup(ScorePopUp scorepopup[], Vector2 pos, int score)
+// two popupfunctions
+void BalloonPopUp(ScorePopUp scorepopup[], Vector2 pos, int score)
 {
     for (int i = 0; i < MAXBALLOONPOPUPS; i++)
     {
@@ -88,10 +93,10 @@ void ArrowPopup(ArrowPopUp arrowpopup[], Vector2 pos, int arrows)
 
 int main(void)
 {
+    // init window and gamestate
     InitWindow(WIDTH, HEIGHT, "HIT 'EM ALL");
     InitAudioDevice();
     SetTargetFPS(60);
-
     GameState currentstate = GAME_MENU;
 
     // loading all audio, textures, fonts
@@ -111,14 +116,12 @@ int main(void)
     Texture2D arrowballoon = LoadTexture("assets/sprites/arrowballoon.png");
     Texture2D dangerballoon = LoadTexture("assets/sprites/dangerballoon.png");
     Texture2D mustpopballoon = LoadTexture("assets/sprites/mustpopballoon.png");
-
+    Texture2D boytexture = LoadTexture("assets/sprites/boy04-removebg-preview.png");
     Texture2D normalballoons[NORMALBALLONSNUM];
     for (int i = 0; i < NORMALBALLONSNUM; i++)
     {
         normalballoons[i] = LoadTexture(TextFormat("assets/sprites/normalballoon%d.png", i + 1));
     }
-
-    Texture2D boytexture = LoadTexture("assets/sprites/boy04-removebg-preview.png");
 
     Font customfont = LoadFontEx("assets/fonts/Carnival Font.ttf", 96, NULL, 0);
 
@@ -137,6 +140,10 @@ int main(void)
         balloons[i].active = false;
     }
 
+    // init popups
+    ScorePopUp scorepopup[MAXBALLOONPOPUPS] = {0};
+    ArrowPopUp arrowpopup[MAXARROWPOPUPS] = {0};
+
     // init game variables
     int score = 0;
     int highestscore = 0;
@@ -149,25 +156,19 @@ int main(void)
     float launchspeed = 0.0f;
 
     // Menu transition delay timer
-    float menuTransitionTimer = 0.0f;
+    float menutimer = 0.0f;
 
-    // Standard Balloon Size
-    float balloonDrawSize = 140.0f;
-    float balloonradius = balloonDrawSize * 0.4f;
+    // Balloon Sizes
+    float normalballoonsize = 140.0f;
+    float balloonradius = normalballoonsize * 0.4f;
 
-    // Independent size settings for Danger Balloon
-    float dangerDrawWidth = 300.0f;
-    float dangerDrawHeight = 164.0f;
-    float dangerRadius = dangerDrawWidth * 0.25f;
+    float dangerwidth = 300.0f;
+    float dangerheight = 164.0f;
+    float dangerradius = dangerwidth * 0.25f;
 
-    // Independent size settings for Must Pop Balloon
-    float mustPopDrawWidth = 180.0f;
-    float mustPopDrawHeight = 180.0f;
-    float mustPopRadius = mustPopDrawWidth * 0.4f;
-
-    // POPUP SCORE & ARROW array
-    ScorePopUp scorepopup[MAXBALLOONPOPUPS] = {0};
-    ArrowPopUp arrowpopup[MAXARROWPOPUPS] = {0};
+    float mustpopwidth = 180.0f;
+    float mustpopheight = 180.0f;
+    float mustpopradius = mustpopwidth * 0.4f;
 
     // reading highest score from file
     FILE *highestscorefile = fopen("highestscore.txt", "r");
@@ -183,41 +184,40 @@ int main(void)
         UpdateMusicStream(bgmusic);
         Vector2 mouseposition = GetMousePosition();
 
-        // --- GAME STATE MACHINE ---
         if (currentstate == GAME_MENU)
         {
             SetMouseCursor(MOUSE_CURSOR_DEFAULT);
 
-            Rectangle startButtonRec = {WIDTH / 2.0f - 120.0f, 350.0f, 260.0f, 50.0f};
-            Rectangle howToPlayButtonRec = {WIDTH / 2.0f - 120.0f, 420.0f, 380.0f, 50.0f};
-            Rectangle highscoreButtonRec = {WIDTH / 2.0f - 120.0f, 490.0f, 420.0f, 50.0f};
-            Rectangle exitButtonRec = {WIDTH / 2.0f - 90.0f, 560.0f, 200.0f, 50.0f};
+            Rectangle startbutton = {WIDTH / 2.0f - 120.0f, 350.0f, 260.0f, 50.0f};
+            Rectangle howtoplaybutton = {WIDTH / 2.0f - 120.0f, 420.0f, 380.0f, 50.0f};
+            Rectangle highestscorebutton = {WIDTH / 2.0f - 120.0f, 490.0f, 420.0f, 50.0f};
+            Rectangle exitbutton = {WIDTH / 2.0f - 90.0f, 560.0f, 200.0f, 50.0f};
 
-            if (CheckCollisionPointRec(mouseposition, startButtonRec) ||
-                CheckCollisionPointRec(mouseposition, howToPlayButtonRec) ||
-                CheckCollisionPointRec(mouseposition, highscoreButtonRec) ||
-                CheckCollisionPointRec(mouseposition, exitButtonRec))
+            if (CheckCollisionPointRec(mouseposition, startbutton) ||
+                CheckCollisionPointRec(mouseposition, howtoplaybutton) ||
+                CheckCollisionPointRec(mouseposition, highestscorebutton) ||
+                CheckCollisionPointRec(mouseposition, exitbutton))
             {
                 SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
             }
 
             // Handle transition delay timer
-            if (menuTransitionTimer > 0.0f)
+            if (menutimer > 0.0f)
             {
-                menuTransitionTimer -= dt;
-                if (menuTransitionTimer <= 0.0f)
+                menutimer -= dt;
+                if (menutimer <= 0.0f)
                 {
                     currentstate = GAME_PLAYING;
                 }
             }
             else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
             {
-                if (CheckCollisionPointRec(mouseposition, startButtonRec))
+                if (CheckCollisionPointRec(mouseposition, startbutton))
                 {
                     PlaySound(clicksound);
-                    menuTransitionTimer = 1.0f; // 1 second delay before switching to gameplay
+                    menutimer = 1.0f;
                 }
-                else if (CheckCollisionPointRec(mouseposition, exitButtonRec))
+                else if (CheckCollisionPointRec(mouseposition, exitbutton)) // exit button, breaks out of game loop
                 {
                     PlaySound(clicksound);
                     break;
@@ -237,7 +237,7 @@ int main(void)
             float maxarrowspeed = 2500.0f;
             float pullspeed = 100.0f;
 
-            // aiming (clamped to +/-45 degrees), pulling back and shooting arrow
+            // aiming, pulling back and shooting arrow
             if (arrowsleft > 0 && gameover == false)
             {
                 float mousepointerangle = atan2f(mouseposition.y - arrowpivot.y, mouseposition.x - arrowpivot.x);
@@ -307,6 +307,7 @@ int main(void)
 
                             int dangerroll = (score >= 200) ? 40 : 0;
                             int mustpoproll = (score >= 100) ? 15 : 0;
+                            int goldroll = (score >= 0) ? 20 : 0;
                             int roll = GetRandomValue(1, 100);
 
                             if (roll <= dangerroll)
@@ -314,20 +315,20 @@ int main(void)
                                 balloons[i].danger = true;
                                 balloons[i].mustpop = false;
                                 balloons[i].gold = false;
-                                balloons[i].radius = dangerRadius;
+                                balloons[i].radius = dangerradius;
                             }
                             else if (roll <= dangerroll + mustpoproll)
                             {
                                 balloons[i].danger = false;
                                 balloons[i].mustpop = true;
                                 balloons[i].gold = false;
-                                balloons[i].radius = mustPopRadius;
+                                balloons[i].radius = mustpopradius;
                             }
-                            else
+                            else if (roll <= goldroll)
                             {
                                 balloons[i].danger = false;
                                 balloons[i].mustpop = false;
-                                balloons[i].gold = (GetRandomValue(1, 10) <= 2);
+                                balloons[i].gold = true;
                                 balloons[i].radius = balloonradius;
                             }
 
@@ -338,13 +339,12 @@ int main(void)
                 }
             }
 
-            // scorepopups update
+            // scorepopups, arrowpopups update
             for (int i = 0; i < MAXBALLOONPOPUPS; i++)
             {
                 if (scorepopup[i].active)
                 {
                     scorepopup[i].visibletime -= dt;
-                    scorepopup[i].position.y -= 20.0f * dt;
                     if (scorepopup[i].visibletime <= 0)
                     {
                         scorepopup[i].active = false;
@@ -352,13 +352,11 @@ int main(void)
                 }
             }
 
-            // arrowpopups update
             for (int i = 0; i < MAXARROWPOPUPS; i++)
             {
                 if (arrowpopup[i].active)
                 {
                     arrowpopup[i].visibletime -= dt;
-                    arrowpopup[i].position.y -= 20.0f * dt;
                     if (arrowpopup[i].visibletime <= 0)
                     {
                         arrowpopup[i].active = false;
@@ -411,13 +409,13 @@ int main(void)
                         arrowsleft += 2;
                         score += 10;
                         PlaySound(popsound);
-                        Popup(scorepopup, balloons[i].position, 10);
+                        BalloonPopUp(scorepopup, balloons[i].position, 10);
                         ArrowPopup(arrowpopup, (Vector2){balloons[i].position.x, balloons[i].position.y - 40.0f}, 2);
                     }
                     else
                     {
                         score += 10;
-                        Popup(scorepopup, balloons[i].position, 10);
+                        BalloonPopUp(scorepopup, balloons[i].position, 10);
                         PlaySound(popsound);
                     }
                 }
@@ -474,15 +472,15 @@ int main(void)
             DrawTexturePro(menubackground, menusrcrec, menudestrec, (Vector2){0.0f, 0.0f}, 0.0f, WHITE);
 
             // Menu Option Rectangles
-            Rectangle startButtonRec = {WIDTH / 2.0f - 120.0f, 350.0f, 260.0f, 50.0f};
-            Rectangle howToPlayButtonRec = {WIDTH / 2.0f - 110.0f, 420.0f, 380.0f, 50.0f};
-            Rectangle highscoreButtonRec = {WIDTH / 2.0f - 80.0f, 490.0f, 420.0f, 50.0f};
-            Rectangle exitButtonRec = {WIDTH / 2.0f - 90.0f, 560.0f, 200.0f, 50.0f};
+            Rectangle startbutton = {WIDTH / 2.0f - 120.0f, 350.0f, 260.0f, 50.0f};
+            Rectangle howtoplaybutton = {WIDTH / 2.0f - 110.0f, 420.0f, 380.0f, 50.0f};
+            Rectangle highestscorebutton = {WIDTH / 2.0f - 80.0f, 490.0f, 420.0f, 50.0f};
+            Rectangle exitbutton = {WIDTH / 2.0f - 90.0f, 560.0f, 200.0f, 50.0f};
 
-            Color startColor = CheckCollisionPointRec(mouseposition, startButtonRec) ? GOLD : BLACK;
-            Color howToColor = CheckCollisionPointRec(mouseposition, howToPlayButtonRec) ? GOLD : BLACK;
-            Color highColor = CheckCollisionPointRec(mouseposition, highscoreButtonRec) ? GOLD : BLACK;
-            Color exitColor = CheckCollisionPointRec(mouseposition, exitButtonRec) ? GOLD : BLACK;
+            Color startColor = CheckCollisionPointRec(mouseposition, startbutton) ? GOLD : BLACK;
+            Color howToColor = CheckCollisionPointRec(mouseposition, howtoplaybutton) ? GOLD : BLACK;
+            Color highColor = CheckCollisionPointRec(mouseposition, highestscorebutton) ? GOLD : BLACK;
+            Color exitColor = CheckCollisionPointRec(mouseposition, exitbutton) ? GOLD : BLACK;
 
             // Text coordinates
             DrawTextEx(customfont, "START", (Vector2){WIDTH / 2.0f - 60.0f, 350.0f}, 48, 2, startColor);
@@ -557,15 +555,15 @@ int main(void)
                     if (balloons[i].danger == true)
                     {
                         Rectangle loonSource = {0, 0, (float)dangerballoon.width, (float)dangerballoon.height};
-                        Rectangle loonDest = {balloons[i].position.x, balloons[i].position.y, dangerDrawWidth, dangerDrawHeight};
-                        Vector2 loonOrigin = {dangerDrawWidth / 2.0f, dangerDrawHeight / 2.0f};
+                        Rectangle loonDest = {balloons[i].position.x, balloons[i].position.y, dangerwidth, dangerheight};
+                        Vector2 loonOrigin = {dangerwidth / 2.0f, dangerheight / 2.0f};
                         DrawTexturePro(dangerballoon, loonSource, loonDest, loonOrigin, 0.0f, WHITE);
                     }
                     else if (balloons[i].mustpop == true)
                     {
                         Rectangle loonSource = {0, 0, (float)mustpopballoon.width, (float)mustpopballoon.height};
-                        Rectangle loonDest = {balloons[i].position.x, balloons[i].position.y, mustPopDrawWidth, mustPopDrawHeight};
-                        Vector2 loonOrigin = {mustPopDrawWidth / 2.0f, mustPopDrawHeight / 2.0f};
+                        Rectangle loonDest = {balloons[i].position.x, balloons[i].position.y, mustpopwidth, mustpopheight};
+                        Vector2 loonOrigin = {mustpopwidth / 2.0f, mustpopheight / 2.0f};
                         DrawTexturePro(mustpopballoon, loonSource, loonDest, loonOrigin, 0.0f, WHITE);
                     }
                     else
@@ -577,8 +575,8 @@ int main(void)
                             balloonTex = normalballoons[balloons[i].index];
 
                         Rectangle loonSource = {0, 0, (float)balloonTex.width, (float)balloonTex.height};
-                        Rectangle loonDest = {balloons[i].position.x, balloons[i].position.y, balloonDrawSize, balloonDrawSize};
-                        Vector2 loonOrigin = {balloonDrawSize / 2.0f, balloonDrawSize / 2.0f};
+                        Rectangle loonDest = {balloons[i].position.x, balloons[i].position.y, normalballoonsize, normalballoonsize};
+                        Vector2 loonOrigin = {normalballoonsize / 2.0f, normalballoonsize / 2.0f};
                         DrawTexturePro(balloonTex, loonSource, loonDest, loonOrigin, 0.0f, WHITE);
                     }
                 }
