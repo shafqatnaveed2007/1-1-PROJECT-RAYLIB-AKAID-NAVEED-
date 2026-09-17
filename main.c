@@ -61,7 +61,7 @@ typedef struct
 } ArrowPopUp;
 
 // Scorepopup and arrowpopup functions
-void Popup(ScorePopUp scorepopup[], Vector2 pos, int score)
+void ScorePopup(ScorePopUp scorepopup[], Vector2 pos, int score)
 {
     for (int i = 0; i < MAXPOPUPS; i++)
     {
@@ -150,8 +150,6 @@ int main(void)
     float launchspeed = 0.0f;
     bool gameover = false;
 
-    float menutimer = 0.0f;
-
     // balloon sizes
     float normalballoonwidth = 140.0f;
     float normalballoonheight = 140.0f;
@@ -168,8 +166,6 @@ int main(void)
     // arrays for popups
     ScorePopUp scorepopup[MAXPOPUPS] = {0};
     ArrowPopUp arrowpopup[MAXARROWPOPUPS] = {0};
-    // buttons
-    Rectangle backbuttonrec = {WIDTH / 2.0f + 400.0f - 60.0f, HEIGHT / 2.0f - 250.0f + 10.0f, 40.0f, 40.0f};
 
     // reading highest score from file
     FILE *highestscorefile = fopen("highestscore.txt", "r");
@@ -181,67 +177,49 @@ int main(void)
 
     // some colors
     Color warmBrown = (Color){60, 38, 22, 255};
-
+    // buttons
+    Rectangle backbuttonrec = {WIDTH / 2.0f + 400.0f - 60.0f, HEIGHT / 2.0f - 250.0f + 10.0f, 40.0f, 40.0f};
     while (!WindowShouldClose())
     {
         float dt = GetFrameTime();
         UpdateMusicStream(bgmusic);
         Vector2 mouseposition = GetMousePosition();
 
-        // Update boy animation frame
-        boyanimtimer += dt;
-        if (boyanimtimer >= boyframeduration)
-        {
-            boyanimtimer = 0.0f;
-            boycurrentframe = (boycurrentframe + 1) % 10;
-        }
-
-        // --- GAME STATE MACHINE ---
+        // game menu state
         if (currentstate == GAME_MENU)
         {
             SetMouseCursor(MOUSE_CURSOR_DEFAULT);
 
-            Rectangle startButtonRec = {WIDTH / 2.0f - 120.0f, 350.0f, 260.0f, 50.0f};
-            Rectangle howToPlayButtonRec = {WIDTH / 2.0f - 120.0f, 420.0f, 380.0f, 50.0f};
-            Rectangle highscoreButtonRec = {WIDTH / 2.0f - 120.0f, 490.0f, 420.0f, 50.0f};
-            Rectangle exitButtonRec = {WIDTH / 2.0f - 90.0f, 560.0f, 200.0f, 50.0f};
+            Rectangle startbutton = {WIDTH / 2.0f - 120.0f, 350.0f, 260.0f, 50.0f};
+            Rectangle howtoplaybutton = {WIDTH / 2.0f - 120.0f, 420.0f, 380.0f, 50.0f};
+            Rectangle highestscorebutton = {WIDTH / 2.0f - 120.0f, 490.0f, 420.0f, 50.0f};
+            Rectangle exitbutton = {WIDTH / 2.0f - 90.0f, 560.0f, 200.0f, 50.0f};
 
-            if (CheckCollisionPointRec(mouseposition, startButtonRec) ||
-                CheckCollisionPointRec(mouseposition, howToPlayButtonRec) ||
-                CheckCollisionPointRec(mouseposition, highscoreButtonRec) ||
-                CheckCollisionPointRec(mouseposition, exitButtonRec))
+            if (CheckCollisionPointRec(mouseposition, startbutton) ||
+                CheckCollisionPointRec(mouseposition, howtoplaybutton) ||
+                CheckCollisionPointRec(mouseposition, highestscorebutton) ||
+                CheckCollisionPointRec(mouseposition, exitbutton))
             {
                 SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
             }
-
-            // Handle transition delay timer
-            if (menutimer > 0.0f)
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
             {
-                menutimer -= dt;
-                if (menutimer <= 0.0f)
-                {
-                    currentstate = GAME_PLAYING;
-                }
-            }
-            else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
-            {
-                if (CheckCollisionPointRec(mouseposition, startButtonRec))
+                if (CheckCollisionPointRec(mouseposition, startbutton))
                 {
                     PlaySound(clicksound);
-                    menutimer = 1.0f; // 1 second delay before switching to gameplay
+                    currentstate = GAME_PLAYING;
                 }
-                else if (CheckCollisionPointRec(mouseposition, exitButtonRec))
+                else if (CheckCollisionPointRec(mouseposition, exitbutton))
                 {
                     PlaySound(clicksound);
                     break;
                 }
-                else if (CheckCollisionPointRec(mouseposition, howToPlayButtonRec))
+                else if (CheckCollisionPointRec(mouseposition, howtoplaybutton))
                 {
                     PlaySound(clicksound);
-
                     currentstate = GAME_HOWTOPLAY;
                 }
-                else if (CheckCollisionPointRec(mouseposition, highscoreButtonRec))
+                else if (CheckCollisionPointRec(mouseposition, highestscorebutton))
                 {
                     PlaySound(clicksound);
                     currentstate = GAME_HIGHSCORE;
@@ -261,7 +239,7 @@ int main(void)
             float maxarrowspeed = 2500.0f;
             float pullspeed = 100.0f;
 
-            // aiming (clamped to +/-45 degrees), pulling back and shooting arrow
+            // aiming, pulling back and shooting arrow
             if (arrowsleft > 0 && gameover == false)
             {
                 float mousepointerangle = atan2f(mouseposition.y - arrowpivot.y, mouseposition.x - arrowpivot.x);
@@ -329,7 +307,7 @@ int main(void)
                             balloons[i].speed = 150.0f;
                             balloons[i].active = true;
 
-                            int dangerroll = (score >= 200) ? 40 : 0;
+                            int dangerroll = (score >= 150) ? 30 : 0;
                             int mustpoproll = (score >= 100) ? 15 : 0;
                             int roll = GetRandomValue(1, 100);
 
@@ -362,7 +340,7 @@ int main(void)
                 }
             }
 
-            // scorepopups update
+            // scorepopups and arrowpopups update
             for (int i = 0; i < MAXPOPUPS; i++)
             {
                 if (scorepopup[i].active)
@@ -375,8 +353,6 @@ int main(void)
                     }
                 }
             }
-
-            // arrowpopups update
             for (int i = 0; i < MAXARROWPOPUPS; i++)
             {
                 if (arrowpopup[i].active)
@@ -435,19 +411,19 @@ int main(void)
                         arrowsleft += 2;
                         score += 10;
                         PlaySound(popsound);
-                        Popup(scorepopup, balloons[i].position, 10);
+                        ScorePopup(scorepopup, balloons[i].position, 10);
                         ArrowPopup(arrowpopup, (Vector2){balloons[i].position.x, balloons[i].position.y - 40.0f}, 2);
                     }
                     else
                     {
                         score += 10;
-                        Popup(scorepopup, balloons[i].position, 10);
+                        ScorePopup(scorepopup, balloons[i].position, 10);
                         PlaySound(popsound);
                     }
                 }
             }
 
-            // gameover and highscore save
+            // gameover and highscore saving
             if (arrowsleft == 0 && arrow.active == false && gameover == false)
             {
                 gameover = true;
@@ -512,39 +488,39 @@ int main(void)
             }
         }
 
-        // --- DRAWING PHASE ---
+        // all drawings
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
         if (currentstate == GAME_MENU)
         {
             // Draw Menu Background
-            Rectangle menusrcrec = {0.0f, 0.0f, (float)menubackground.width, (float)menubackground.height};
-            Rectangle menudestrec = {0.0f, 0.0f, (float)WIDTH, (float)HEIGHT};
-            DrawTexturePro(menubackground, menusrcrec, menudestrec, (Vector2){0.0f, 0.0f}, 0.0f, WHITE);
+            Rectangle menusource = {0.0f, 0.0f, (float)menubackground.width, (float)menubackground.height};
+            Rectangle menudest = {0.0f, 0.0f, (float)WIDTH, (float)HEIGHT};
+            DrawTexturePro(menubackground, menusource, menudest, (Vector2){0.0f, 0.0f}, 0.0f, WHITE);
 
             // Menu Option Rectangles
-            Rectangle startButtonRec = {WIDTH / 2.0f - 120.0f, 350.0f, 260.0f, 50.0f};
-            Rectangle howToPlayButtonRec = {WIDTH / 2.0f - 110.0f, 420.0f, 380.0f, 50.0f};
-            Rectangle highscoreButtonRec = {WIDTH / 2.0f - 80.0f, 490.0f, 420.0f, 50.0f};
-            Rectangle exitButtonRec = {WIDTH / 2.0f - 90.0f, 560.0f, 200.0f, 50.0f};
+            Rectangle startbutton = {WIDTH / 2.0f - 120.0f, 350.0f, 260.0f, 50.0f};
+            Rectangle howtoplaybutton = {WIDTH / 2.0f - 110.0f, 420.0f, 380.0f, 50.0f};
+            Rectangle highestscorebutton = {WIDTH / 2.0f - 80.0f, 490.0f, 420.0f, 50.0f};
+            Rectangle exitbutton = {WIDTH / 2.0f - 90.0f, 560.0f, 200.0f, 50.0f};
 
-            Color startColor = CheckCollisionPointRec(mouseposition, startButtonRec) ? GOLD : BLACK;
-            Color howToColor = CheckCollisionPointRec(mouseposition, howToPlayButtonRec) ? GOLD : BLACK;
-            Color highColor = CheckCollisionPointRec(mouseposition, highscoreButtonRec) ? GOLD : BLACK;
-            Color exitColor = CheckCollisionPointRec(mouseposition, exitButtonRec) ? GOLD : BLACK;
+            Color startcolor = CheckCollisionPointRec(mouseposition, startbutton) ? GOLD : BLACK;
+            Color howtoplaycolor = CheckCollisionPointRec(mouseposition, howtoplaybutton) ? GOLD : BLACK;
+            Color highestscorecolor = CheckCollisionPointRec(mouseposition, highestscorebutton) ? GOLD : BLACK;
+            Color exitcolor = CheckCollisionPointRec(mouseposition, exitbutton) ? GOLD : BLACK;
 
             // Text coordinates
-            DrawTextEx(customfont, "START", (Vector2){WIDTH / 2.0f - 60.0f, 350.0f}, 48, 2, startColor);
-            DrawTextEx(customfont, "HOW TO PLAY", (Vector2){WIDTH / 2.0f - 120.0f, 420.0f}, 48, 2, howToColor);
-            DrawTextEx(customfont, "HIGHEST SCORE", (Vector2){WIDTH / 2.0f - 130.0f, 490.0f}, 48, 2, highColor);
-            DrawTextEx(customfont, "EXIT", (Vector2){WIDTH / 2.0f - 40.0f, 560.0f}, 48, 2, exitColor);
+            DrawTextEx(customfont, "START", (Vector2){WIDTH / 2.0f - 60.0f, 350.0f}, 48, 2, startcolor);
+            DrawTextEx(customfont, "HOW TO PLAY", (Vector2){WIDTH / 2.0f - 120.0f, 420.0f}, 48, 2, howtoplaycolor);
+            DrawTextEx(customfont, "HIGHEST SCORE", (Vector2){WIDTH / 2.0f - 130.0f, 490.0f}, 48, 2, highestscorecolor);
+            DrawTextEx(customfont, "EXIT", (Vector2){WIDTH / 2.0f - 40.0f, 560.0f}, 48, 2, exitcolor);
         }
         else if (currentstate == GAME_HOWTOPLAY)
         {
-            Rectangle menusrcrec = {0.0f, 0.0f, (float)menubackground.width, (float)menubackground.height};
-            Rectangle menudestrec = {0.0f, 0.0f, (float)WIDTH, (float)HEIGHT};
-            DrawTexturePro(menubackground, menusrcrec, menudestrec, (Vector2){0.0f, 0.0f}, 0.0f, WHITE);
+            Rectangle menusource = {0.0f, 0.0f, (float)menubackground.width, (float)menubackground.height};
+            Rectangle menudest = {0.0f, 0.0f, (float)WIDTH, (float)HEIGHT};
+            DrawTexturePro(menubackground, menusource, menudest, (Vector2){0.0f, 0.0f}, 0.0f, WHITE);
 
             Color dimOverlay = {0, 0, 0, 150}; // black, roughly 60% opacity
             DrawRectangle(0, 0, WIDTH, HEIGHT, dimOverlay);
@@ -574,9 +550,9 @@ int main(void)
         }
         else if (currentstate == GAME_HIGHSCORE)
         {
-            Rectangle menusrcrec = {0.0f, 0.0f, (float)menubackground.width, (float)menubackground.height};
-            Rectangle menudestrec = {0.0f, 0.0f, (float)WIDTH, (float)HEIGHT};
-            DrawTexturePro(menubackground, menusrcrec, menudestrec, (Vector2){0.0f, 0.0f}, 0.0f, WHITE);
+            Rectangle menusource = {0.0f, 0.0f, (float)menubackground.width, (float)menubackground.height};
+            Rectangle menudest = {0.0f, 0.0f, (float)WIDTH, (float)HEIGHT};
+            DrawTexturePro(menubackground, menusource, menudest, (Vector2){0.0f, 0.0f}, 0.0f, WHITE);
 
             Color dimOverlay = {0, 0, 0, 150}; // black, roughly 60% opacity
             DrawRectangle(0, 0, WIDTH, HEIGHT, dimOverlay);
@@ -597,9 +573,9 @@ int main(void)
             float boyWidth = 396.0f;
             float boyHeight = 528.0f;
             Vector2 boyPos = {240.0f, 630.0f};
-            Rectangle boySource = {0.0f, 0.0f, (float)boytextures[boycurrentframe].width, (float)boytextures[boycurrentframe].height};
+            Rectangle boySource = {0.0f, 0.0f, (float)boytexture.width, (float)boytexture.height};
             Rectangle boyDest = {boyPos.x, boyPos.y, boyWidth, boyHeight};
-            DrawTexturePro(boytextures[boycurrentframe], boySource, boyDest, (Vector2){boyWidth / 2.0f, boyHeight / 2.0f}, 0.0f, WHITE);
+            DrawTexturePro(boytexture, boySource, boyDest, (Vector2){boyWidth / 2.0f, boyHeight / 2.0f}, 0.0f, WHITE);
 
             // bow drawing variables for rendering
             Vector2 arrowpivot = {280.0f, 590.0f};
