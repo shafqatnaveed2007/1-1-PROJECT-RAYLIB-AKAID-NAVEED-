@@ -106,7 +106,7 @@ int main(void)
 
     PlayMusicStream(bgmusic);
 
-    Texture2D menubackground = LoadTexture("assets/sprites/menuscreen.png");
+    Texture2D menubackground = LoadTexture("assets/sprites/MENUBG.png");
     Texture2D background = LoadTexture("assets/sprites/Untitled-1.png");
     Texture2D gameovertexture = LoadTexture("assets/sprites/gameover.png");
     Texture2D bowimage = LoadTexture("assets/sprites/bow.png");
