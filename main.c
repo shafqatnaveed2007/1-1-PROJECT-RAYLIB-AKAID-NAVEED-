@@ -8,9 +8,9 @@
 #define HEIGHT 800
 #define NORMALBALLONSNUM 4
 #define SPAWNPOINTS 5
-#define MAXBALLOONS 14
-#define MAXPOPUPS 6
-#define MAXARROWPOPUPS 6
+#define MAXBALLOONS 10
+#define MAXBALLOONPOPUPS 3
+#define MAXARROWPOPUPS 3
 
 typedef enum
 {
@@ -45,7 +45,7 @@ typedef struct
     Vector2 position;
     int value;
     float visibletime;
-    bool isactive;
+    bool active;
 } ScorePopUp;
 
 typedef struct
@@ -53,17 +53,16 @@ typedef struct
     Vector2 position;
     int value;
     float visibletime;
-    bool isactive;
+    bool active;
 } ArrowPopUp;
 
-// Scorepopup function for calling it in case of normal, mustpop, danger loons
 void Popup(ScorePopUp scorepopup[], Vector2 pos, int score)
 {
-    for (int i = 0; i < MAXPOPUPS; i++)
+    for (int i = 0; i < MAXBALLOONPOPUPS; i++)
     {
-        if (scorepopup[i].isactive == false)
+        if (scorepopup[i].active == false)
         {
-            scorepopup[i].isactive = true;
+            scorepopup[i].active = true;
             scorepopup[i].position = pos;
             scorepopup[i].value = score;
             scorepopup[i].visibletime = 1.0f;
@@ -72,14 +71,13 @@ void Popup(ScorePopUp scorepopup[], Vector2 pos, int score)
     }
 }
 
-// Arrowpopup function for calling it when a golden balloon is popped or mustpop balloon escapes
 void ArrowPopup(ArrowPopUp arrowpopup[], Vector2 pos, int arrows)
 {
     for (int i = 0; i < MAXARROWPOPUPS; i++)
     {
-        if (arrowpopup[i].isactive == false)
+        if (arrowpopup[i].active == false)
         {
-            arrowpopup[i].isactive = true;
+            arrowpopup[i].active = true;
             arrowpopup[i].position = pos;
             arrowpopup[i].value = arrows;
             arrowpopup[i].visibletime = 1.0f;
@@ -94,7 +92,6 @@ int main(void)
     InitAudioDevice();
     SetTargetFPS(60);
 
-    // Initialize Game State
     GameState currentstate = GAME_MENU;
 
     // loading all audio, textures, fonts
@@ -121,12 +118,7 @@ int main(void)
         normalballoons[i] = LoadTexture(TextFormat("assets/sprites/normalballoon%d.png", i + 1));
     }
 
-    // Load Boy Animation Textures (boy01.png to boy10.png)
-    Texture2D boytextures[10];
-    for (int i = 0; i < 10; i++)
-    {
-        boytextures[i] = LoadTexture(TextFormat("assets/sprites/boy%02d-removebg-preview.png", i + 1));
-    }
+    Texture2D boytexture = LoadTexture("assets/sprites/boy04-removebg-preview.png");
 
     Font customfont = LoadFontEx("assets/fonts/Carnival Font.ttf", 96, NULL, 0);
 
@@ -159,11 +151,6 @@ int main(void)
     // Menu transition delay timer
     float menuTransitionTimer = 0.0f;
 
-    // Boy animation variables
-    int boycurrentframe = 0;
-    float boyanimtimer = 0.0f;
-    float boyframeduration = 1.0f / 5.0f; // 5 FPS animation
-
     // Standard Balloon Size
     float balloonDrawSize = 140.0f;
     float balloonradius = balloonDrawSize * 0.4f;
@@ -179,7 +166,7 @@ int main(void)
     float mustPopRadius = mustPopDrawWidth * 0.4f;
 
     // POPUP SCORE & ARROW array
-    ScorePopUp scorepopup[MAXPOPUPS] = {0};
+    ScorePopUp scorepopup[MAXBALLOONPOPUPS] = {0};
     ArrowPopUp arrowpopup[MAXARROWPOPUPS] = {0};
 
     // reading highest score from file
@@ -195,14 +182,6 @@ int main(void)
         float dt = GetFrameTime();
         UpdateMusicStream(bgmusic);
         Vector2 mouseposition = GetMousePosition();
-
-        // Update boy animation frame
-        boyanimtimer += dt;
-        if (boyanimtimer >= boyframeduration)
-        {
-            boyanimtimer = 0.0f;
-            boycurrentframe = (boycurrentframe + 1) % 10;
-        }
 
         // --- GAME STATE MACHINE ---
         if (currentstate == GAME_MENU)
@@ -360,15 +339,15 @@ int main(void)
             }
 
             // scorepopups update
-            for (int i = 0; i < MAXPOPUPS; i++)
+            for (int i = 0; i < MAXBALLOONPOPUPS; i++)
             {
-                if (scorepopup[i].isactive)
+                if (scorepopup[i].active)
                 {
                     scorepopup[i].visibletime -= dt;
                     scorepopup[i].position.y -= 20.0f * dt;
                     if (scorepopup[i].visibletime <= 0)
                     {
-                        scorepopup[i].isactive = false;
+                        scorepopup[i].active = false;
                     }
                 }
             }
@@ -376,13 +355,13 @@ int main(void)
             // arrowpopups update
             for (int i = 0; i < MAXARROWPOPUPS; i++)
             {
-                if (arrowpopup[i].isactive)
+                if (arrowpopup[i].active)
                 {
                     arrowpopup[i].visibletime -= dt;
                     arrowpopup[i].position.y -= 20.0f * dt;
                     if (arrowpopup[i].visibletime <= 0)
                     {
-                        arrowpopup[i].isactive = false;
+                        arrowpopup[i].active = false;
                     }
                 }
             }
@@ -521,9 +500,9 @@ int main(void)
             float boyWidth = 396.0f;
             float boyHeight = 528.0f;
             Vector2 boyPos = {240.0f, 630.0f};
-            Rectangle boySource = {0.0f, 0.0f, (float)boytextures[boycurrentframe].width, (float)boytextures[boycurrentframe].height};
+            Rectangle boySource = {0.0f, 0.0f, (float)boytexture.width, (float)boytexture.height};
             Rectangle boyDest = {boyPos.x, boyPos.y, boyWidth, boyHeight};
-            DrawTexturePro(boytextures[boycurrentframe], boySource, boyDest, (Vector2){boyWidth / 2.0f, boyHeight / 2.0f}, 0.0f, WHITE);
+            DrawTexturePro(boytexture, boySource, boyDest, (Vector2){boyWidth / 2.0f, boyHeight / 2.0f}, 0.0f, WHITE);
 
             // bow drawing variables for rendering
             Vector2 arrowpivot = {280.0f, 590.0f};
@@ -617,9 +596,9 @@ int main(void)
             DrawTextEx(customfont, TextFormat("LAUNCH SPEED: %.2f", launchspeed), (Vector2){30, 723}, 42, 2, WHITE);
 
             // drawing scorepopups
-            for (int i = 0; i < MAXPOPUPS; i++)
+            for (int i = 0; i < MAXBALLOONPOPUPS; i++)
             {
-                if (scorepopup[i].isactive)
+                if (scorepopup[i].active)
                 {
                     DrawTextEx(customfont, TextFormat("+%d", scorepopup[i].value), scorepopup[i].position, 65, 2, BLACK);
                     DrawTextEx(customfont, TextFormat("+%d", scorepopup[i].value), (Vector2){scorepopup[i].position.x + 2, scorepopup[i].position.y + 2}, 65, 2, GOLD);
@@ -629,7 +608,7 @@ int main(void)
             // drawing arrowpopups
             for (int i = 0; i < MAXARROWPOPUPS; i++)
             {
-                if (arrowpopup[i].isactive)
+                if (arrowpopup[i].active)
                 {
                     Color popupColor = (arrowpopup[i].value < 0) ? RED : GREEN;
                     const char *popupText = (arrowpopup[i].value < 0) ? TextFormat("%d ARROWS", arrowpopup[i].value) : TextFormat("+%d ARROWS", arrowpopup[i].value);
@@ -673,10 +652,8 @@ int main(void)
     {
         UnloadTexture(normalballoons[i]);
     }
-    for (int i = 0; i < 10; i++)
-    {
-        UnloadTexture(boytextures[i]);
-    }
+
+    UnloadTexture(boytexture);
     UnloadTexture(arrowballoon);
     UnloadTexture(dangerballoon);
     UnloadTexture(mustpopballoon);
