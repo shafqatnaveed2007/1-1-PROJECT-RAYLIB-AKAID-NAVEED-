@@ -561,6 +561,12 @@ int main(void)
             Rectangle backbutton = {WIDTH / 2.0f + 340.0f, HEIGHT / 2.0f - 240.0f, 40.0f, 40.0f};
             Color backbuttoncolor = CheckCollisionPointRec(mouseposition, backbutton) ? GOLD : BLACK;
             DrawTextEx(customfont, "X", (Vector2){WIDTH / 2.0f + 350.0f, HEIGHT / 2.0f - 235.0f}, 32, 2, backbuttoncolor);
+
+            const char *titletext = "HIGHEST SCORE";
+            DrawTextEx(customfont, titletext, (Vector2){WIDTH / 2.0f - 160.0f, HEIGHT / 2.0f - 150.0f}, 54, 2, (Color){60, 38, 22, 255});
+            const char *scoretext = TextFormat("%d", highestscore);
+            Vector2 scoretextSize = MeasureTextEx(customfont, scoretext, 80, 2);
+            DrawTextEx(customfont, scoretext, (Vector2){WIDTH / 2.0f - scoretextSize.x / 2.0f, HEIGHT / 2.0f - 30.0f}, 80, 2, (Color){60, 38, 22, 255});
         }
         else if (currentstate == GAME_PLAYING)
         {
@@ -661,8 +667,6 @@ int main(void)
             DrawTextEx(customfont, TextFormat("SCORE: %d", score), (Vector2){30, 25}, 42, 2, WHITE);
             DrawTextEx(customfont, TextFormat("ARROWS: %d", arrowsleft), (Vector2){32, 73}, 42, 2, BLACK);
             DrawTextEx(customfont, TextFormat("ARROWS: %d", arrowsleft), (Vector2){30, 75}, 42, 2, WHITE);
-            DrawTextEx(customfont, TextFormat("HIGHEST SCORE: %d", highestscore), (Vector2){32, 123}, 42, 2, BLACK);
-            DrawTextEx(customfont, TextFormat("HIGHEST SCORE: %d", highestscore), (Vector2){30, 125}, 42, 2, GOLD);
 
             DrawTextEx(customfont, TextFormat("ANGLE: %.2f", -(aimangle * RAD2DEG)), (Vector2){30, 673}, 42, 2, WHITE);
             DrawTextEx(customfont, TextFormat("LAUNCH SPEED: %.2f", launchspeed), (Vector2){30, 723}, 42, 2, WHITE);
