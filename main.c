@@ -102,6 +102,7 @@ int main(void)
     Sound shootsound = LoadSound("assets/audio/Gun Shooting.ogg");
     Sound popsound = LoadSound("assets/audio/Balloon Pop.mp3");
     Sound gameoversound = LoadSound("assets/audio/Game Over.mp3");
+    Sound clicksound = LoadSound("assets/audio/Button Clicking.wav");
 
     PlayMusicStream(bgmusic);
 
@@ -155,6 +156,9 @@ int main(void)
     float pulldistance = 0.0f;
     float launchspeed = 0.0f;
 
+    // Menu transition delay timer
+    float menuTransitionTimer = 0.0f;
+
     // Boy animation variables
     int boycurrentframe = 0;
     float boyanimtimer = 0.0f;
@@ -203,10 +207,8 @@ int main(void)
         // --- GAME STATE MACHINE ---
         if (currentstate == GAME_MENU)
         {
-            // Reset cursor to default, will change if hovering over a button
             SetMouseCursor(MOUSE_CURSOR_DEFAULT);
 
-            // Updated button hitboxes (How To Play and Highest Score shifted more to the right)
             Rectangle startButtonRec = {WIDTH / 2.0f - 120.0f, 350.0f, 260.0f, 50.0f};
             Rectangle howToPlayButtonRec = {WIDTH / 2.0f - 120.0f, 420.0f, 380.0f, 50.0f};
             Rectangle highscoreButtonRec = {WIDTH / 2.0f - 120.0f, 490.0f, 420.0f, 50.0f};
@@ -220,16 +222,26 @@ int main(void)
                 SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
             }
 
-            // Check clicks
-            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+            // Handle transition delay timer
+            if (menuTransitionTimer > 0.0f)
             {
-                if (CheckCollisionPointRec(mouseposition, startButtonRec))
+                menuTransitionTimer -= dt;
+                if (menuTransitionTimer <= 0.0f)
                 {
                     currentstate = GAME_PLAYING;
                 }
+            }
+            else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+            {
+                if (CheckCollisionPointRec(mouseposition, startButtonRec))
+                {
+                    PlaySound(clicksound);
+                    menuTransitionTimer = 1.0f; // 1 second delay before switching to gameplay
+                }
                 else if (CheckCollisionPointRec(mouseposition, exitButtonRec))
                 {
-                    break; // Exits the game loop
+                    PlaySound(clicksound);
+                    break;
                 }
             }
         }
@@ -482,7 +494,7 @@ int main(void)
             Rectangle menudestrec = {0.0f, 0.0f, (float)WIDTH, (float)HEIGHT};
             DrawTexturePro(menubackground, menusrcrec, menudestrec, (Vector2){0.0f, 0.0f}, 0.0f, WHITE);
 
-            // Menu Option Rectangles (Hitboxes updated to match shifted text positions)
+            // Menu Option Rectangles
             Rectangle startButtonRec = {WIDTH / 2.0f - 120.0f, 350.0f, 260.0f, 50.0f};
             Rectangle howToPlayButtonRec = {WIDTH / 2.0f - 110.0f, 420.0f, 380.0f, 50.0f};
             Rectangle highscoreButtonRec = {WIDTH / 2.0f - 80.0f, 490.0f, 420.0f, 50.0f};
@@ -493,7 +505,7 @@ int main(void)
             Color highColor = CheckCollisionPointRec(mouseposition, highscoreButtonRec) ? GOLD : BLACK;
             Color exitColor = CheckCollisionPointRec(mouseposition, exitButtonRec) ? GOLD : BLACK;
 
-            // Text coordinates shifted further to the right
+            // Text coordinates
             DrawTextEx(customfont, "START", (Vector2){WIDTH / 2.0f - 60.0f, 350.0f}, 48, 2, startColor);
             DrawTextEx(customfont, "HOW TO PLAY", (Vector2){WIDTH / 2.0f - 120.0f, 420.0f}, 48, 2, howToColor);
             DrawTextEx(customfont, "HIGHEST SCORE", (Vector2){WIDTH / 2.0f - 130.0f, 490.0f}, 48, 2, highColor);
@@ -644,8 +656,13 @@ int main(void)
                 const char *scoretext = TextFormat("YOUR SCORE: %d", score);
                 DrawTextEx(customfont, scoretext, (Vector2){600.0f, 600.0f}, 48.0f, 2, BLACK);
                 DrawTextEx(customfont, scoretext, (Vector2){598.0f, 598.0f}, 48.0f, 2, RAYWHITE);
+
+                const char *highscoretext = TextFormat("HIGHEST SCORE: %d", highestscore);
+                DrawTextEx(customfont, highscoretext, (Vector2){600.0f, 650.0f}, 48.0f, 2, BLACK);
+                DrawTextEx(customfont, highscoretext, (Vector2){598.0f, 648.0f}, 48.0f, 2, RAYWHITE);
             }
         }
+
         EndDrawing();
     }
 
@@ -671,6 +688,7 @@ int main(void)
     UnloadSound(popsound);
     UnloadMusicStream(bgmusic);
     UnloadSound(gameoversound);
+    UnloadSound(clicksound);
     CloseAudioDevice();
     CloseWindow();
     return 0;
