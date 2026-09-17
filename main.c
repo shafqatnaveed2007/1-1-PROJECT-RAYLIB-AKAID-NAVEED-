@@ -181,6 +181,8 @@ int main(void)
     // POPUP SCORE & ARROW array
     ScorePopUp scorepopup[MAXPOPUPS] = {0};
     ArrowPopUp arrowpopup[MAXARROWPOPUPS] = {0};
+    //buttons
+    Rectangle backbuttonrec={WIDTH/2.0f + 400.0f - 60.0f, HEIGHT/2.0f - 250.0f + 10.0f, 40.0f, 40.0f};
 
     // reading highest score from file
     FILE *highestscorefile = fopen("highestscore.txt", "r");
@@ -189,6 +191,9 @@ int main(void)
         fscanf(highestscorefile, "%d", &highestscore);
         fclose(highestscorefile);
     }
+
+    //some colors
+    Color warmBrown = (Color){ 60, 38, 22, 255 };
 
     while (!WindowShouldClose())
     {
@@ -243,6 +248,20 @@ int main(void)
                     PlaySound(clicksound);
                     break;
                 }
+                else if(CheckCollisionPointRec(mouseposition, howToPlayButtonRec))
+                {
+                    PlaySound(clicksound);
+                    
+                    currentstate=GAME_HOWTOPLAY;
+
+                }
+                else if(CheckCollisionPointRec(mouseposition, highscoreButtonRec))
+                {
+                    PlaySound(clicksound);
+                    currentstate=GAME_HIGHSCORE;
+
+                }
+
             }
         }
         else if (currentstate == GAME_PLAYING)
@@ -482,6 +501,34 @@ int main(void)
                 PlayMusicStream(bgmusic);
             }
         }
+        else if(currentstate==GAME_HOWTOPLAY)
+        {
+            SetMouseCursor(MOUSE_CURSOR_DEFAULT);
+            if(CheckCollisionPointRec(mouseposition, backbuttonrec))
+            {
+                SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
+
+            }
+            if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mouseposition, backbuttonrec))
+            {
+                PlaySound(clicksound);
+                currentstate=GAME_MENU;
+            }
+        }
+        else if(currentstate==GAME_HIGHSCORE)
+        {
+            SetMouseCursor(MOUSE_CURSOR_DEFAULT);
+            if(CheckCollisionPointRec(mouseposition, backbuttonrec))
+            {
+                SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
+
+            }
+            if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mouseposition, backbuttonrec))
+            {
+                PlaySound(clicksound);
+                currentstate=GAME_MENU;
+            }
+        }
 
         // --- DRAWING PHASE ---
         BeginDrawing();
@@ -510,6 +557,54 @@ int main(void)
             DrawTextEx(customfont, "HOW TO PLAY", (Vector2){WIDTH / 2.0f - 120.0f, 420.0f}, 48, 2, howToColor);
             DrawTextEx(customfont, "HIGHEST SCORE", (Vector2){WIDTH / 2.0f - 130.0f, 490.0f}, 48, 2, highColor);
             DrawTextEx(customfont, "EXIT", (Vector2){WIDTH / 2.0f - 40.0f, 560.0f}, 48, 2, exitColor);
+        }
+        else if(currentstate == GAME_HOWTOPLAY)
+        {
+            Rectangle menusrcrec = {0.0f, 0.0f, (float)menubackground.width, (float)menubackground.height};
+            Rectangle menudestrec = {0.0f, 0.0f, (float)WIDTH, (float)HEIGHT};
+            DrawTexturePro(menubackground, menusrcrec, menudestrec, (Vector2){0.0f, 0.0f}, 0.0f, WHITE);
+
+            Color dimOverlay = { 0, 0, 0, 150 };  // black, roughly 60% opacity
+            DrawRectangle(0, 0, WIDTH, HEIGHT, dimOverlay);
+            Rectangle panelrec={WIDTH/2-400, HEIGHT/2-250, 800, 500};
+            DrawRectangleRounded(panelrec, 0.05f, 8, (Color){245, 235, 210, 255});
+            //backbutton drawing
+            
+            Color backbuttoncolor=CheckCollisionPointRec(mouseposition, backbuttonrec)? GOLD:BLACK;
+            DrawTextEx(customfont, "X", (Vector2){WIDTH/2.0f + 400.0f - 50.0f, HEIGHT/2.0f - 250.0f + 15.0f}, 32, 2, backbuttoncolor);
+            const char*instructions[]={
+                "AIM your bow by moving the mouse.",
+                "Click and HOLD to pull back the string.",
+                "RELEASE to fire your arrow!",
+                "",
+                "Watch out for special balloons:",
+                "GOLD balloons give bonus arrows and points.",
+                "HIT balloons must be popped before they escape!",
+                "DANGER balloons end your game instantly!",
+                "",
+                "You start with 10 arrows. Good luck!"
+            };
+            int linenum=sizeof(instructions)/sizeof(instructions[0]);
+            for(int i=0; i<linenum;i++)
+            {
+                float lineposy=HEIGHT/2.0f - 200.0f + (i * 40.0f);
+                DrawTextEx(customfont, instructions[i], (Vector2){WIDTH/2.0f - 380.0f, lineposy}, 32, 2, warmBrown);
+            }
+        }
+        else if(currentstate == GAME_HIGHSCORE)
+        {
+            Rectangle menusrcrec = {0.0f, 0.0f, (float)menubackground.width, (float)menubackground.height};
+            Rectangle menudestrec = {0.0f, 0.0f, (float)WIDTH, (float)HEIGHT};
+            DrawTexturePro(menubackground, menusrcrec, menudestrec, (Vector2){0.0f, 0.0f}, 0.0f, WHITE);
+
+            Color dimOverlay = { 0, 0, 0, 150 };  // black, roughly 60% opacity
+            DrawRectangle(0, 0, WIDTH, HEIGHT, dimOverlay);
+            Rectangle panelrec={WIDTH/2-400, HEIGHT/2-250, 800, 500};
+            DrawRectangleRounded(panelrec, 0.05f, 8, (Color){245, 235, 210, 255});
+            //backbutton drawing
+            
+            Color backbuttoncolor=CheckCollisionPointRec(mouseposition, backbuttonrec)? GOLD:BLACK;
+            DrawTextEx(customfont, "X", (Vector2){WIDTH/2.0f + 400.0f - 50.0f, HEIGHT/2.0f - 250.0f + 15.0f}, 32, 2, backbuttoncolor);
         }
         else if (currentstate == GAME_PLAYING)
         {
