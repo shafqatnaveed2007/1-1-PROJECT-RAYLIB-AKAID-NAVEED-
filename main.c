@@ -276,170 +276,179 @@ int main(void)
                     launchspeed = arrowspeed;
                     pulldistance = 0.0f;
                 }
-
-                // projectile formula
-                if (arrow.active == true)
+            }
+            // projectile formula
+            if (arrow.active == true)
+            {
+                arrow.velocity.y += dt * gravity;
+                arrow.position = Vector2Add(arrow.position, Vector2Scale(arrow.velocity, dt));
+                if (arrow.position.x > WIDTH + 50 || arrow.position.y > HEIGHT + 50)
                 {
-                    arrow.velocity.y += dt * gravity;
-                    arrow.position = Vector2Add(arrow.position, Vector2Scale(arrow.velocity, dt));
-                    if (arrow.position.x > WIDTH + 50 || arrow.position.y > HEIGHT + 50)
+                    arrow.active = false;
+                }
+            }
+
+            // spawning balloons
+            if (gameover == false)
+            {
+                currenttimer += dt;
+                if (currenttimer >= spawninterval)
+                {
+                    currenttimer = 0.0f;
+                    for (int i = 0; i < MAXBALLOONS; i++)
                     {
-                        arrow.active = false;
+                        if (balloons[i].active == false)
+                        {
+                            balloons[i].position = spawnpoints[GetRandomValue(0, 4)];
+                            balloons[i].speed = 150.0f;
+                            balloons[i].active = true;
+
+                            int dangerroll = (score >= 150) ? 30 : 0;
+                            int mustpoproll = (score >= 100) ? 15 : 0;
+                            int roll = GetRandomValue(1, 100);
+
+                            if (roll <= dangerroll)
+                            {
+                                balloons[i].danger = true;
+                                balloons[i].mustpop = false;
+                                balloons[i].gold = false;
+                                balloons[i].radius = dangerradius;
+                            }
+                            else if (roll <= dangerroll + mustpoproll)
+                            {
+                                balloons[i].danger = false;
+                                balloons[i].mustpop = true;
+                                balloons[i].gold = false;
+                                balloons[i].radius = mustpopradius;
+                            }
+                            else
+                            {
+                                balloons[i].danger = false;
+                                balloons[i].mustpop = false;
+                                balloons[i].gold = (GetRandomValue(1, 10) <= 2);
+                                balloons[i].radius = balloonradius;
+                            }
+
+                            balloons[i].index = GetRandomValue(0, 3);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // scorepopups and arrowpopups update
+            for (int i = 0; i < MAXPOPUPS; i++)
+            {
+                if (scorepopup[i].active)
+                {
+                    scorepopup[i].visibletime -= dt;
+                    scorepopup[i].position.y -= 20.0f * dt;
+                    if (scorepopup[i].visibletime <= 0)
+                    {
+                        scorepopup[i].active = false;
+                    }
+                }
+            }
+            for (int i = 0; i < MAXARROWPOPUPS; i++)
+            {
+                if (arrowpopup[i].active)
+                {
+                    arrowpopup[i].visibletime -= dt;
+                    arrowpopup[i].position.y -= 20.0f * dt;
+                    if (arrowpopup[i].visibletime <= 0)
+                    {
+                        arrowpopup[i].active = false;
+                    }
+                }
+            }
+
+            // balloon movement & collision physics
+            for (int i = 0; i < MAXBALLOONS; i++)
+            {
+                if (balloons[i].active == false)
+                    continue;
+
+                balloons[i].position.y -= dt * balloons[i].speed;
+
+                if (balloons[i].position.y < -100.0f)
+                {
+                    balloons[i].active = false;
+                    if (balloons[i].mustpop == true)
+                    {
+                        arrowsleft -= 2;
+                        if (arrowsleft < 0)
+                            arrowsleft = 0;
+                        ArrowPopup(arrowpopup, (Vector2){balloons[i].position.x, 40.0f}, -2);
                     }
                 }
 
-                // spawning balloons
-                if (gameover == false)
+                if (arrow.active == true && CheckCollisionCircles(arrow.position, arrow.radius, balloons[i].position, balloons[i].radius) == true)
                 {
-                    currenttimer += dt;
-                    if (currenttimer >= spawninterval)
+                    balloons[i].active = false;
+
+                    if (balloons[i].danger == true)
                     {
-                        currenttimer = 0.0f;
-                        for (int i = 0; i < MAXBALLOONS; i++)
+                        gameover = true;
+                        StopMusicStream(bgmusic);
+                        PlaySound(gameoversound);
+                        if (score > highestscore)
                         {
-                            if (balloons[i].active == false)
+                            highestscore = score;
+                            FILE *highestscorefile = fopen("highestscore.txt", "w");
+                            if (highestscorefile != NULL)
                             {
-                                balloons[i].position = spawnpoints[GetRandomValue(0, 4)];
-                                balloons[i].speed = 150.0f;
-                                balloons[i].active = true;
-
-                                int dangerroll = (score >= 150) ? 30 : 0;
-                                int mustpoproll = (score >= 100) ? 15 : 0;
-                                int roll = GetRandomValue(1, 100);
-
-                                if (roll <= dangerroll)
-                                {
-                                    balloons[i].danger = true;
-                                    balloons[i].mustpop = false;
-                                    balloons[i].gold = false;
-                                    balloons[i].radius = dangerradius;
-                                }
-                                else if (roll <= dangerroll + mustpoproll)
-                                {
-                                    balloons[i].danger = false;
-                                    balloons[i].mustpop = true;
-                                    balloons[i].gold = false;
-                                    balloons[i].radius = mustpopradius;
-                                }
-                                else
-                                {
-                                    balloons[i].danger = false;
-                                    balloons[i].mustpop = false;
-                                    balloons[i].gold = (GetRandomValue(1, 10) <= 2);
-                                    balloons[i].radius = balloonradius;
-                                }
-
-                                balloons[i].index = GetRandomValue(0, 3);
-                                break;
+                                fprintf(highestscorefile, "%d", highestscore);
+                                fclose(highestscorefile);
                             }
                         }
                     }
+                    else if (balloons[i].gold == true)
+                    {
+                        arrowsleft += 2;
+                        score += 10;
+                        PlaySound(popsound);
+                        ScorePopup(scorepopup, balloons[i].position, 10);
+                        ArrowPopup(arrowpopup, (Vector2){balloons[i].position.x, balloons[i].position.y - 40.0f}, 2);
+                    }
+                    else
+                    {
+                        score += 10;
+                        ScorePopup(scorepopup, balloons[i].position, 10);
+                        PlaySound(popsound);
+                    }
                 }
+            }
 
-                // scorepopups and arrowpopups update
-                for (int i = 0; i < MAXPOPUPS; i++)
+            // gameover and highscore saving
+            if (arrowsleft == 0 && arrow.active == false && gameover == false)
+            {
+                gameover = true;
+                StopMusicStream(bgmusic);
+                PlaySound(gameoversound);
+
+                if (score > highestscore)
                 {
-                    if (scorepopup[i].active)
+                    highestscore = score;
+                    FILE *highestscorefile = fopen("highestscore.txt", "w");
+                    if (highestscorefile != NULL)
                     {
-                        scorepopup[i].visibletime -= dt;
-                        scorepopup[i].position.y -= 20.0f * dt;
-                        if (scorepopup[i].visibletime <= 0)
-                        {
-                            scorepopup[i].active = false;
-                        }
+                        fprintf(highestscorefile, "%d", highestscore);
+                        fclose(highestscorefile);
                     }
                 }
-                for (int i = 0; i < MAXARROWPOPUPS; i++)
+            }
+
+            // restart logic
+            if (gameover == true)
+            {
+                Rectangle menubutton = {WIDTH - 250.0f, 40.0f, 220.0f, 50.0f};
+                bool ishovered = CheckCollisionPointRec(mouseposition, menubutton);
+
+                if (ishovered)
                 {
-                    if (arrowpopup[i].active)
-                    {
-                        arrowpopup[i].visibletime -= dt;
-                        arrowpopup[i].position.y -= 20.0f * dt;
-                        if (arrowpopup[i].visibletime <= 0)
-                        {
-                            arrowpopup[i].active = false;
-                        }
-                    }
+                    SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
                 }
-
-                // balloon movement & collision physics
-                for (int i = 0; i < MAXBALLOONS; i++)
-                {
-                    if (balloons[i].active == false)
-                        continue;
-
-                    balloons[i].position.y -= dt * balloons[i].speed;
-
-                    if (balloons[i].position.y < -100.0f)
-                    {
-                        balloons[i].active = false;
-                        if (balloons[i].mustpop == true)
-                        {
-                            arrowsleft -= 2;
-                            if (arrowsleft < 0)
-                                arrowsleft = 0;
-                            ArrowPopup(arrowpopup, (Vector2){balloons[i].position.x, 40.0f}, -2);
-                        }
-                    }
-
-                    if (arrow.active == true && CheckCollisionCircles(arrow.position, arrow.radius, balloons[i].position, balloons[i].radius) == true)
-                    {
-                        balloons[i].active = false;
-
-                        if (balloons[i].danger == true)
-                        {
-                            gameover = true;
-                            StopMusicStream(bgmusic);
-                            PlaySound(gameoversound);
-                            if (score > highestscore)
-                            {
-                                highestscore = score;
-                                FILE *highestscorefile = fopen("highestscore.txt", "w");
-                                if (highestscorefile != NULL)
-                                {
-                                    fprintf(highestscorefile, "%d", highestscore);
-                                    fclose(highestscorefile);
-                                }
-                            }
-                        }
-                        else if (balloons[i].gold == true)
-                        {
-                            arrowsleft += 2;
-                            score += 10;
-                            PlaySound(popsound);
-                            ScorePopup(scorepopup, balloons[i].position, 10);
-                            ArrowPopup(arrowpopup, (Vector2){balloons[i].position.x, balloons[i].position.y - 40.0f}, 2);
-                        }
-                        else
-                        {
-                            score += 10;
-                            ScorePopup(scorepopup, balloons[i].position, 10);
-                            PlaySound(popsound);
-                        }
-                    }
-                }
-
-                // gameover and highscore saving
-                if (arrowsleft == 0 && arrow.active == false && gameover == false)
-                {
-                    gameover = true;
-                    StopMusicStream(bgmusic);
-                    PlaySound(gameoversound);
-
-                    if (score > highestscore)
-                    {
-                        highestscore = score;
-                        FILE *highestscorefile = fopen("highestscore.txt", "w");
-                        if (highestscorefile != NULL)
-                        {
-                            fprintf(highestscorefile, "%d", highestscore);
-                            fclose(highestscorefile);
-                        }
-                    }
-                }
-
-                // restart logic
-                if (gameover == true && IsKeyPressed(KEY_R) == true)
+                if (IsKeyPressed(KEY_R) == true)
                 {
                     gameover = false;
                     arrowsleft = 10;
@@ -455,6 +464,27 @@ int main(void)
                     }
                     StopSound(gameoversound);
                     PlayMusicStream(bgmusic);
+                }
+                else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && ishovered)
+                {
+                    PlaySound(clicksound);
+                    SetMouseCursor(MOUSE_CURSOR_DEFAULT);
+
+                    gameover = false;
+                    arrowsleft = 10;
+                    score = 0;
+                    currenttimer = 0.0f;
+                    launchspeed = 0.0f;
+                    pulldistance = 0.0f;
+                    arrow.active = false;
+                    for (int i = 0; i < MAXBALLOONS; i++)
+                    {
+                        balloons[i].active = false;
+                    }
+
+                    StopSound(gameoversound);
+                    PlayMusicStream(bgmusic);
+                    currentstate = GAME_MENU;
                 }
             }
         }
@@ -666,10 +696,12 @@ int main(void)
             DrawTextEx(customfont, TextFormat("SCORE: %d", score), (Vector2){32, 23}, 42, 2, BLACK);
             DrawTextEx(customfont, TextFormat("SCORE: %d", score), (Vector2){30, 25}, 42, 2, WHITE);
             DrawTextEx(customfont, TextFormat("ARROWS: %d", arrowsleft), (Vector2){32, 73}, 42, 2, BLACK);
-            DrawTextEx(customfont, TextFormat("ARROWS: %d", arrowsleft), (Vector2){30, 75}, 42, 2, WHITE);
+            DrawTextEx(customfont, TextFormat("ARROWS: %d", arrowsleft), (Vector2){30, 75}, 42, 2, GOLD);
 
+            DrawTextEx(customfont, TextFormat("ANGLE: %.2f", -(aimangle * RAD2DEG)), (Vector2){32, 671}, 42, 2, BLACK);
             DrawTextEx(customfont, TextFormat("ANGLE: %.2f", -(aimangle * RAD2DEG)), (Vector2){30, 673}, 42, 2, WHITE);
-            DrawTextEx(customfont, TextFormat("LAUNCH SPEED: %.2f", launchspeed), (Vector2){30, 723}, 42, 2, WHITE);
+            DrawTextEx(customfont, TextFormat("LAUNCH SPEED: %.2f", launchspeed), (Vector2){32, 721}, 42, 2, BLACK);
+            DrawTextEx(customfont, TextFormat("LAUNCH SPEED: %.2f", launchspeed), (Vector2){30, 723}, 42, 2, GOLD);
 
             // drawing scorepopups
             for (int i = 0; i < MAXPOPUPS; i++)
@@ -700,21 +732,32 @@ int main(void)
                 float gameoverwidth = (float)gameovertexture.width * 1.8f;
                 float gameoverheight = (float)gameovertexture.height * 1.8f;
                 Rectangle gameoversource = {0.0f, 0.0f, (float)gameovertexture.width, (float)gameovertexture.height};
-                Rectangle gameoverdest = {800.0f, 300.0f, gameoverwidth, gameoverheight};
+                Rectangle gameoverdest = {820.0f, 300.0f, gameoverwidth, gameoverheight};
                 Vector2 gameoverorigin = {gameoverwidth / 2.0f, gameoverheight / 2.0f};
                 DrawTexturePro(gameovertexture, gameoversource, gameoverdest, gameoverorigin, 0.0f, WHITE);
 
+                Rectangle textpanel = {540.0f, 480.0f, 560.0f, 250.0f};
+                Color paneldim = {0, 0, 0, 140};
+                DrawRectangleRounded(textpanel, 0.2f, 8, paneldim);
+
                 const char *restarttext = "PRESS R TO RESTART";
                 DrawTextEx(customfont, restarttext, (Vector2){600.0f, 500.0f}, 48.0f, 2, BLACK);
-                DrawTextEx(customfont, restarttext, (Vector2){598.0f, 498.0f}, 48.0f, 2, RAYWHITE);
+                DrawTextEx(customfont, restarttext, (Vector2){598.0f, 498.0f}, 48.0f, 2, GOLD);
 
                 const char *scoretext = TextFormat("YOUR SCORE: %d", score);
                 DrawTextEx(customfont, scoretext, (Vector2){600.0f, 600.0f}, 48.0f, 2, BLACK);
-                DrawTextEx(customfont, scoretext, (Vector2){598.0f, 598.0f}, 48.0f, 2, RAYWHITE);
+                DrawTextEx(customfont, scoretext, (Vector2){598.0f, 598.0f}, 48.0f, 2, WHITE);
 
                 const char *highscoretext = TextFormat("HIGHEST SCORE: %d", highestscore);
                 DrawTextEx(customfont, highscoretext, (Vector2){600.0f, 650.0f}, 48.0f, 2, BLACK);
-                DrawTextEx(customfont, highscoretext, (Vector2){598.0f, 648.0f}, 48.0f, 2, RAYWHITE);
+                DrawTextEx(customfont, highscoretext, (Vector2){598.0f, 648.0f}, 48.0f, 2, GOLD);
+
+                Rectangle menubutton = {WIDTH - 270.0f, 40.0f, 220.0f, 100.0f};
+                bool ishovered = CheckCollisionPointRec(mouseposition, menubutton);
+                Color buttoncolor = ishovered ? GOLD : RAYWHITE;
+                DrawRectangleRounded(menubutton, 0.3f, 4, (Color){0, 0, 0, 150});
+                DrawRectangleRoundedLines(menubutton, 0.3f, 16, buttoncolor);
+                DrawTextEx(customfont, "MAIN MENU", (Vector2){menubutton.x + 20.0f, menubutton.y + 20.0f}, 40.0f, 2, buttoncolor);
             }
         }
 
