@@ -262,7 +262,7 @@ int main(void)
                         pulldistance = maxpulldistance;
                     }
                 }
-                if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && arrow.active == false)
+                if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && arrow.active == false && pulldistance > 15.0f)
                 {
                     float pullratio = pulldistance / maxpulldistance;
                     float arrowspeed = minarrowspeed + pullratio * (maxarrowspeed - minarrowspeed);
