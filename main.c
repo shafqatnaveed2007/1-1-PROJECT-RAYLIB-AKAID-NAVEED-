@@ -90,6 +90,16 @@ void ArrowPopup(ArrowPopUp arrowpopup[], Vector2 pos, int arrows)
     }
 }
 
+void SaveHighestScore(int score)
+{
+    FILE *savefile = fopen("highestscore.txt", "w");
+    if (savefile != NULL)
+    {
+        fprintf(savefile, "%d", score);
+        fclose(savefile);
+    }
+}
+
 int main(void)
 {
     InitWindow(WIDTH, HEIGHT, "HIT 'EM ALL");
@@ -134,15 +144,11 @@ int main(void)
     Arrow arrow = {0};
 
     Balloon balloons[MAXBALLOONS] = {0};
-    for (int i = 0; i < MAXBALLOONS; i++)
-    {
-        balloons[i].active = false;
-    }
 
     // init game variables
     int score = 0;
     int highestscore = 0;
-    int arrowsleft = 11;
+    int arrowsleft = 10;
     float gravity = 1000.0f;
     float currenttimer = 0.0f;
     float spawninterval = 2.0f;
@@ -187,8 +193,8 @@ int main(void)
             SetMouseCursor(MOUSE_CURSOR_DEFAULT);
 
             Rectangle startbutton = {WIDTH / 2.0f - 120.0f, 350.0f, 260.0f, 50.0f};
-            Rectangle howtoplaybutton = {WIDTH / 2.0f - 120.0f, 420.0f, 380.0f, 50.0f};
-            Rectangle highestscorebutton = {WIDTH / 2.0f - 120.0f, 490.0f, 420.0f, 50.0f};
+            Rectangle howtoplaybutton = {WIDTH / 2.0f - 150.0f, 420.0f, 380.0f, 50.0f};
+            Rectangle highestscorebutton = {WIDTH / 2.0f - 150.0f, 490.0f, 420.0f, 50.0f};
             Rectangle exitbutton = {WIDTH / 2.0f - 90.0f, 560.0f, 200.0f, 50.0f};
 
             if (CheckCollisionPointRec(mouseposition, startbutton) ||
@@ -375,10 +381,11 @@ int main(void)
                     balloons[i].active = false;
                     if (balloons[i].mustpop == true)
                     {
+                        int actualloss = (arrowsleft >= 2) ? 2 : arrowsleft;
                         arrowsleft -= 2;
                         if (arrowsleft < 0)
                             arrowsleft = 0;
-                        ArrowPopup(arrowpopup, (Vector2){balloons[i].position.x, 40.0f}, -2);
+                        ArrowPopup(arrowpopup, (Vector2){balloons[i].position.x, 40.0f}, -actualloss);
                     }
                 }
 
@@ -394,12 +401,7 @@ int main(void)
                         if (score > highestscore)
                         {
                             highestscore = score;
-                            FILE *highestscorefile = fopen("highestscore.txt", "w");
-                            if (highestscorefile != NULL)
-                            {
-                                fprintf(highestscorefile, "%d", highestscore);
-                                fclose(highestscorefile);
-                            }
+                            SaveHighestScore(highestscore);
                         }
                     }
                     else if (balloons[i].gold == true)
@@ -429,19 +431,14 @@ int main(void)
                 if (score > highestscore)
                 {
                     highestscore = score;
-                    FILE *highestscorefile = fopen("highestscore.txt", "w");
-                    if (highestscorefile != NULL)
-                    {
-                        fprintf(highestscorefile, "%d", highestscore);
-                        fclose(highestscorefile);
-                    }
+                    SaveHighestScore(highestscore);
                 }
             }
 
             // restart logic
             if (gameover == true)
             {
-                Rectangle menubutton = {WIDTH - 250.0f, 40.0f, 220.0f, 50.0f};
+                Rectangle menubutton = {WIDTH - 270.0f, 40.0f, 220.0f, 100.0f};
                 bool ishovered = CheckCollisionPointRec(mouseposition, menubutton);
 
                 if (ishovered)
@@ -528,8 +525,8 @@ int main(void)
 
             // Menu Option Rectangles
             Rectangle startbutton = {WIDTH / 2.0f - 120.0f, 350.0f, 260.0f, 50.0f};
-            Rectangle howtoplaybutton = {WIDTH / 2.0f - 110.0f, 420.0f, 380.0f, 50.0f};
-            Rectangle highestscorebutton = {WIDTH / 2.0f - 80.0f, 490.0f, 420.0f, 50.0f};
+            Rectangle howtoplaybutton = {WIDTH / 2.0f - 120.0f, 420.0f, 380.0f, 50.0f};
+            Rectangle highestscorebutton = {WIDTH / 2.0f - 120.0f, 490.0f, 420.0f, 50.0f};
             Rectangle exitbutton = {WIDTH / 2.0f - 90.0f, 560.0f, 200.0f, 50.0f};
 
             Color startcolor = CheckCollisionPointRec(mouseposition, startbutton) ? GOLD : BLACK;
@@ -541,7 +538,7 @@ int main(void)
             DrawTextEx(customfont, "START", (Vector2){WIDTH / 2.0f - 60.0f, 350.0f}, 48, 2, startcolor);
             DrawTextEx(customfont, "HOW TO PLAY", (Vector2){WIDTH / 2.0f - 120.0f, 420.0f}, 48, 2, howtoplaycolor);
             DrawTextEx(customfont, "HIGHEST SCORE", (Vector2){WIDTH / 2.0f - 130.0f, 490.0f}, 48, 2, highestscorecolor);
-            DrawTextEx(customfont, "EXIT", (Vector2){WIDTH / 2.0f - 40.0f, 560.0f}, 48, 2, exitcolor);
+            DrawTextEx(customfont, "EXIT", (Vector2){WIDTH / 2.0f - 50.0f, 560.0f}, 48, 2, exitcolor);
         }
         else if (currentstate == GAME_HOWTOPLAY)
         {
