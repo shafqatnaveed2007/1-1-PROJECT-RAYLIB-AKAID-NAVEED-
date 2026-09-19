@@ -8,7 +8,7 @@
 // macros
 #define WIDTH 1600
 #define HEIGHT 800
-#define NORMALBALLONSNUM 4
+#define NORMALBALLOONSNUM 4
 #define SPAWNPOINTS 5
 #define MAXBALLOONS 10
 #define MAXPOPUPS 5
@@ -90,6 +90,7 @@ void ArrowPopup(ArrowPopUp arrowpopup[], Vector2 pos, int arrows)
     }
 }
 
+// saving highest score to file
 void SaveHighestScore(int score)
 {
     FILE *savefile = fopen("highestscore.txt", "w");
@@ -126,8 +127,8 @@ int main(void)
     Texture2D arrowballoon = LoadTexture("assets/sprites/arrowballoon.png");
     Texture2D dangerballoon = LoadTexture("assets/sprites/dangerballoon.png");
     Texture2D mustpopballoon = LoadTexture("assets/sprites/mustpopballoon.png");
-    Texture2D normalballoons[NORMALBALLONSNUM];
-    for (int i = 0; i < NORMALBALLONSNUM; i++)
+    Texture2D normalballoons[NORMALBALLOONSNUM];
+    for (int i = 0; i < NORMALBALLOONSNUM; i++)
     {
         normalballoons[i] = LoadTexture(TextFormat("assets/sprites/normalballoon%d.png", i + 1));
     }
@@ -142,8 +143,10 @@ int main(void)
     }
 
     Arrow arrow = {0};
-
     Balloon balloons[MAXBALLOONS] = {0};
+    // arrays for popups
+    ScorePopUp scorepopup[MAXPOPUPS] = {0};
+    ArrowPopUp arrowpopup[MAXARROWPOPUPS] = {0};
 
     // init game variables
     int score = 0;
@@ -169,10 +172,6 @@ int main(void)
     float mustpopheight = 180.0f;
     float mustpopradius = mustpopwidth * 0.4f;
 
-    // arrays for popups
-    ScorePopUp scorepopup[MAXPOPUPS] = {0};
-    ArrowPopUp arrowpopup[MAXARROWPOPUPS] = {0};
-
     // reading highest score from file
     FILE *highestscorefile = fopen("highestscore.txt", "r");
     if (highestscorefile != NULL)
@@ -186,7 +185,7 @@ int main(void)
         float dt = GetFrameTime();
         UpdateMusicStream(bgmusic);
         Vector2 mouseposition = GetMousePosition();
-        Rectangle backbutton = {WIDTH / 2.0f + 340.0f, HEIGHT / 2.0f - 240.0f, 40.0f, 40.0f};
+        Rectangle crossbutton = {WIDTH / 2.0f + 340.0f, HEIGHT / 2.0f - 240.0f, 40.0f, 40.0f};
         // game menu state
         if (currentstate == GAME_MENU)
         {
@@ -295,6 +294,8 @@ int main(void)
             }
 
             // spawning balloons
+            float basespeed = 150.0f;
+            float speedincrease = 0.75f;
             if (gameover == false)
             {
                 currenttimer += dt;
@@ -306,11 +307,11 @@ int main(void)
                         if (balloons[i].active == false)
                         {
                             balloons[i].position = spawnpoints[GetRandomValue(0, 4)];
-                            balloons[i].speed = 150.0f;
+                            balloons[i].speed = basespeed + score * speedincrease;
                             balloons[i].active = true;
 
-                            int dangerroll = (score >= 150) ? 30 : 0;
-                            int mustpoproll = (score >= 100) ? 15 : 0;
+                            int dangerroll = (score >= 120) ? 30 : 0;
+                            int mustpoproll = (score >= 80) ? 20 : 0;
                             int roll = GetRandomValue(1, 100);
 
                             if (roll <= dangerroll)
@@ -381,11 +382,10 @@ int main(void)
                     balloons[i].active = false;
                     if (balloons[i].mustpop == true)
                     {
-                        int actualloss = (arrowsleft >= 2) ? 2 : arrowsleft;
                         arrowsleft -= 2;
                         if (arrowsleft < 0)
                             arrowsleft = 0;
-                        ArrowPopup(arrowpopup, (Vector2){balloons[i].position.x, 40.0f}, -actualloss);
+                        ArrowPopup(arrowpopup, (Vector2){balloons[i].position.x, 40.0f}, -2);
                     }
                 }
 
@@ -453,12 +453,13 @@ int main(void)
                     currenttimer = 0.0f;
                     launchspeed = 0.0f;
                     pulldistance = 0.0f;
-
                     arrow.active = false;
+
                     for (int i = 0; i < MAXBALLOONS; i++)
                     {
                         balloons[i].active = false;
                     }
+
                     StopSound(gameoversound);
                     PlayMusicStream(bgmusic);
                 }
@@ -474,6 +475,7 @@ int main(void)
                     launchspeed = 0.0f;
                     pulldistance = 0.0f;
                     arrow.active = false;
+
                     for (int i = 0; i < MAXBALLOONS; i++)
                     {
                         balloons[i].active = false;
@@ -487,12 +489,14 @@ int main(void)
         }
         else if (currentstate == GAME_HOWTOPLAY)
         {
+            Rectangle crossbutton = {WIDTH / 2.0f + 340.0f, HEIGHT / 2.0f - 240.0f, 40.0f, 40.0f};
+
             SetMouseCursor(MOUSE_CURSOR_DEFAULT);
-            if (CheckCollisionPointRec(mouseposition, backbutton))
+            if (CheckCollisionPointRec(mouseposition, crossbutton))
             {
                 SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
             }
-            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mouseposition, backbutton))
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mouseposition, crossbutton))
             {
                 PlaySound(clicksound);
                 currentstate = GAME_MENU;
@@ -500,12 +504,14 @@ int main(void)
         }
         else if (currentstate == GAME_HIGHESTSCORE)
         {
+            Rectangle crossbutton = {WIDTH / 2.0f + 340.0f, HEIGHT / 2.0f - 240.0f, 40.0f, 40.0f};
             SetMouseCursor(MOUSE_CURSOR_DEFAULT);
-            if (CheckCollisionPointRec(mouseposition, backbutton))
+            if (CheckCollisionPointRec(mouseposition, crossbutton))
             {
+
                 SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
             }
-            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mouseposition, backbutton))
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mouseposition, crossbutton))
             {
                 PlaySound(clicksound);
                 currentstate = GAME_MENU;
@@ -535,7 +541,7 @@ int main(void)
             Color exitcolor = CheckCollisionPointRec(mouseposition, exitbutton) ? GOLD : BLACK;
 
             // Text coordinates
-            DrawTextEx(customfont, "START", (Vector2){WIDTH / 2.0f - 60.0f, 350.0f}, 48, 2, startcolor);
+            DrawTextEx(customfont, "PLAY", (Vector2){WIDTH / 2.0f - 50.0f, 350.0f}, 48, 2, startcolor);
             DrawTextEx(customfont, "HOW TO PLAY", (Vector2){WIDTH / 2.0f - 120.0f, 420.0f}, 48, 2, howtoplaycolor);
             DrawTextEx(customfont, "HIGHEST SCORE", (Vector2){WIDTH / 2.0f - 130.0f, 490.0f}, 48, 2, highestscorecolor);
             DrawTextEx(customfont, "EXIT", (Vector2){WIDTH / 2.0f - 50.0f, 560.0f}, 48, 2, exitcolor);
@@ -551,9 +557,9 @@ int main(void)
             Rectangle howtoplaypanel = {WIDTH / 2 - 400, HEIGHT / 2 - 250, 800, 500};
             DrawRectangleRounded(howtoplaypanel, 0.05f, 8, (Color){245, 235, 210, 255});
 
-            Rectangle backbutton = {WIDTH / 2.0f + 340.0f, HEIGHT / 2.0f - 240.0f, 40.0f, 40.0f};
-            Color backbuttoncolor = CheckCollisionPointRec(mouseposition, backbutton) ? GOLD : BLACK;
-            DrawTextEx(customfont, "X", (Vector2){WIDTH / 2.0f + 350.0f, HEIGHT / 2.0f - 235.0f}, 32, 2, backbuttoncolor);
+            Rectangle crossbutton = {WIDTH / 2.0f + 340.0f, HEIGHT / 2.0f - 240.0f, 40.0f, 40.0f};
+            Color crossbuttoncolor = CheckCollisionPointRec(mouseposition, crossbutton) ? GOLD : BLACK;
+            DrawTextEx(customfont, "X", (Vector2){WIDTH / 2.0f + 350.0f, HEIGHT / 2.0f - 235.0f}, 32, 2, crossbuttoncolor);
 
             const char *instructions[] = {
                 "AIM your bow by moving the mouse.",
@@ -562,7 +568,7 @@ int main(void)
                 "",
                 "Watch out for special balloons:",
                 "GOLD balloons give bonus arrows and points.",
-                "HIT balloons must be popped before they escape!",
+                "POP balloons must be popped before they escape!",
                 "DANGER balloons end your game instantly!",
                 "",
                 "You start with 10 arrows. Good luck!"};
@@ -585,9 +591,9 @@ int main(void)
             Rectangle highestscorepanel = {WIDTH / 2 - 400, HEIGHT / 2 - 250, 800, 500};
             DrawRectangleRounded(highestscorepanel, 0.05f, 8, (Color){245, 235, 210, 255});
 
-            Rectangle backbutton = {WIDTH / 2.0f + 340.0f, HEIGHT / 2.0f - 240.0f, 40.0f, 40.0f};
-            Color backbuttoncolor = CheckCollisionPointRec(mouseposition, backbutton) ? GOLD : BLACK;
-            DrawTextEx(customfont, "X", (Vector2){WIDTH / 2.0f + 350.0f, HEIGHT / 2.0f - 235.0f}, 32, 2, backbuttoncolor);
+            Rectangle crossbutton = {WIDTH / 2.0f + 340.0f, HEIGHT / 2.0f - 240.0f, 40.0f, 40.0f};
+            Color crossbuttoncolor = CheckCollisionPointRec(mouseposition, crossbutton) ? GOLD : BLACK;
+            DrawTextEx(customfont, "X", (Vector2){WIDTH / 2.0f + 350.0f, HEIGHT / 2.0f - 235.0f}, 32, 2, crossbuttoncolor);
 
             const char *titletext = "HIGHEST SCORE";
             DrawTextEx(customfont, titletext, (Vector2){WIDTH / 2.0f - 160.0f, HEIGHT / 2.0f - 150.0f}, 54, 2, (Color){60, 38, 22, 255});
@@ -764,7 +770,7 @@ int main(void)
     // all unloading
     UnloadTexture(menubackground);
     UnloadTexture(background);
-    for (int i = 0; i < NORMALBALLONSNUM; i++)
+    for (int i = 0; i < NORMALBALLOONSNUM; i++)
     {
         UnloadTexture(normalballoons[i]);
     }
