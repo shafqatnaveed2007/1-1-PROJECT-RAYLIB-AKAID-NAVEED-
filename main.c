@@ -123,7 +123,7 @@ int main(void)
 
     Texture2D menubackground = LoadTexture("assets/sprites/menuscreen.png");
     Texture2D background = LoadTexture("assets/sprites/gamescreen.png");
-    Texture2D gameovertexture = LoadTexture("assets/sprites/gameover.png");
+    Texture2D gameovertexture = LoadTexture("assets/sprites/GAMEOVER - Copy.png");
     Texture2D bowimage = LoadTexture("assets/sprites/bow.png");
     Texture2D arrowimage = LoadTexture("assets/sprites/arrow.png");
     Texture2D arrowballoon = LoadTexture("assets/sprites/arrowballoon.png");
@@ -737,11 +737,11 @@ int main(void)
             // gameover screen
             if (gameover == true)
             {
-                float gameoverwidth = (float)gameovertexture.width * 1.8f;
-                float gameoverheight = (float)gameovertexture.height * 1.8f;
+                //float gameoverwidth = (float)gameovertexture.width * 1.8f;
+                //float gameoverheight = (float)gameovertexture.height * 1.8f;
                 Rectangle gameoversource = {0.0f, 0.0f, (float)gameovertexture.width, (float)gameovertexture.height};
-                Rectangle gameoverdest = {820.0f, 300.0f, gameoverwidth, gameoverheight};
-                Vector2 gameoverorigin = {gameoverwidth / 2.0f, gameoverheight / 2.0f};
+                Rectangle gameoverdest = {415.0f, 180.0f, gameovertexture.width, gameovertexture.height};
+                Vector2 gameoverorigin = {0.0f, 0.0f};
                 DrawTexturePro(gameovertexture, gameoversource, gameoverdest, gameoverorigin, 0.0f, WHITE);
 
                 Rectangle textpanel = {540.0f, 480.0f, 560.0f, 250.0f};
