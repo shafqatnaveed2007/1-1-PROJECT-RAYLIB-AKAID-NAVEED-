@@ -13,7 +13,7 @@
 #define MAXBALLOONS 10
 #define MAXPOPUPS 5
 #define MAXARROWPOPUPS 5
-
+#define MAXLEADERBOARD 5
 // enum for gamestate
 typedef enum
 {
@@ -90,15 +90,32 @@ void ArrowPopup(ArrowPopUp arrowpopup[], Vector2 pos, int arrows)
     }
 }
 
-// saving highest score to file
-void SaveHighestScore(int score)
+// saving leaderboard scores
+void SaveLeaderBoardScores(int leaderboard[])
 {
-    FILE *savefile = fopen("highestscore.txt", "w");
+    FILE *savefile = fopen("leaderboard.txt", "w");
     if (savefile != NULL)
     {
-        fprintf(savefile, "%d", score);
+        for(int i=0; i<MAXLEADERBOARD; i++)
+        {
+        fprintf(savefile, "%d\n", leaderboard[i]);
+        
+        }
         fclose(savefile);
     }
+}
+//in correct order
+void SortingScores(int leaderboard[], int newscore)
+{
+    if(newscore<=leaderboard[MAXLEADERBOARD-1])
+    return;
+    int i=MAXLEADERBOARD-1;
+    while(i>0 && newscore > leaderboard[i-1])
+    {
+        leaderboard[i]=leaderboard[i-1];
+        i--;
+    }
+    leaderboard[i]=newscore;
 }
 
 int main(void)
@@ -152,7 +169,7 @@ int main(void)
 
     // init game variables
     int score = 0;
-    int highestscore = 0;
+    int leaderboard[MAXLEADERBOARD] = {0};
     int arrowsleft = 10;
     float gravity = 1000.0f;
     float currenttimer = 0.0f;
@@ -174,12 +191,16 @@ int main(void)
     float mustpopheight = 180.0f;
     float mustpopradius = mustpopwidth * 0.4f;
 
-    // reading highest score from file
-    FILE *highestscorefile = fopen("highestscore.txt", "r");
-    if (highestscorefile != NULL)
+    // reading scores from file to put in leaderboard
+    FILE *leaderboardfile = fopen("leaderboard.txt", "r");
+    if (leaderboardfile != NULL)
     {
-        fscanf(highestscorefile, "%d", &highestscore);
-        fclose(highestscorefile);
+        for(int i=0; i<MAXLEADERBOARD;i++)
+        {
+        if(fscanf(leaderboardfile, "%d", &leaderboard[i]!=1))
+        break;
+        }
+        fclose(leaderboardfile);
     }
 
     while (!WindowShouldClose())
@@ -403,11 +424,9 @@ int main(void)
                         gameover = true;
                         StopMusicStream(bgmusic);
                         PlaySound(gameoversound);
-                        if (score > highestscore)
-                        {
-                            highestscore = score;
-                            SaveHighestScore(highestscore);
-                        }
+                        SortingScores(leaderboard, score);
+                        SaveLeaderBoardScores(leaderboard);
+                       
                     }
                     else if (balloons[i].gold == true)
                     {
@@ -433,11 +452,8 @@ int main(void)
                 StopMusicStream(bgmusic);
                 PlaySound(gameoversound);
 
-                if (score > highestscore)
-                {
-                    highestscore = score;
-                    SaveHighestScore(highestscore);
-                }
+                SortingScores(leaderboard, score);
+                SaveLeaderBoardScores(leaderboard);
             }
 
             // restart logic
@@ -548,7 +564,7 @@ int main(void)
             // Text coordinates
             DrawTextEx(customfont, "PLAY", (Vector2){WIDTH / 2.0f - 50.0f, 350.0f}, 48, 2, startcolor);
             DrawTextEx(customfont, "HOW TO PLAY", (Vector2){WIDTH / 2.0f - 120.0f, 420.0f}, 48, 2, howtoplaycolor);
-            DrawTextEx(customfont, "HIGHEST SCORE", (Vector2){WIDTH / 2.0f - 130.0f, 490.0f}, 48, 2, highestscorecolor);
+            DrawTextEx(customfont, "LEADERBOARD", (Vector2){WIDTH / 2.0f - 130.0f, 490.0f}, 48, 2, highestscorecolor);
             DrawTextEx(customfont, "EXIT", (Vector2){WIDTH / 2.0f - 50.0f, 560.0f}, 48, 2, exitcolor);
         }
         else if (currentstate == GAME_HOWTOPLAY)
@@ -600,11 +616,14 @@ int main(void)
             Color crossbuttoncolor = CheckCollisionPointRec(mouseposition, crossbutton) ? GOLD : BLACK;
             DrawTextEx(customfont, "X", (Vector2){WIDTH / 2.0f + 350.0f, HEIGHT / 2.0f - 235.0f}, 32, 2, crossbuttoncolor);
 
-            const char *titletext = "HIGHEST SCORE";
+            const char *titletext = "LEADERBOARD";
             DrawTextEx(customfont, titletext, (Vector2){WIDTH / 2.0f - 160.0f, HEIGHT / 2.0f - 150.0f}, 54, 2, (Color){60, 38, 22, 255});
-            const char *scoretext = TextFormat("%d", highestscore);
-            Vector2 scoretextSize = MeasureTextEx(customfont, scoretext, 80, 2);
-            DrawTextEx(customfont, scoretext, (Vector2){WIDTH / 2.0f - scoretextSize.x / 2.0f, HEIGHT / 2.0f - 30.0f}, 80, 2, (Color){60, 38, 22, 255});
+            
+            for(int i=0; i<MAXLEADERBOARD;i++)
+            {
+                const char*ranktext=TextFormat("%d. %d", i+1, leaderboard[i]);
+                DrawTextEx(customfont, ranktext, (Vector2){WIDTH/2.0f-100.0f, HEIGHT/2.0f-60.0f+i*55.0f}, 42, 2, (Color){60, 38, 22, 255});
+            }
         }
         else if (currentstate == GAME_PLAYING)
         {
@@ -705,6 +724,8 @@ int main(void)
             DrawTextEx(customfont, TextFormat("SCORE: %d", score), (Vector2){30, 25}, 42, 2, WHITE);
             DrawTextEx(customfont, TextFormat("ARROWS: %d", arrowsleft), (Vector2){32, 73}, 42, 2, BLACK);
             DrawTextEx(customfont, TextFormat("ARROWS: %d", arrowsleft), (Vector2){30, 75}, 42, 2, GOLD);
+            DrawTextEx(customfont, TextFormat("HIGH SCORE: %d", leaderboard[0]), (Vector2){32, 123}, 42, 2, BLACK);
+            DrawTextEx(customfont, TextFormat("HIGH SCORE: %d", leaderboard[0]), (Vector2){30, 125}, 42, 2, WHITE);
 
             DrawTextEx(customfont, TextFormat("ANGLE: %.2f", -(aimangle * RAD2DEG)), (Vector2){32, 671}, 42, 2, BLACK);
             DrawTextEx(customfont, TextFormat("ANGLE: %.2f", -(aimangle * RAD2DEG)), (Vector2){30, 673}, 42, 2, WHITE);
@@ -756,7 +777,7 @@ int main(void)
                 DrawTextEx(customfont, scoretext, (Vector2){600.0f, 600.0f}, 48.0f, 2, BLACK);
                 DrawTextEx(customfont, scoretext, (Vector2){598.0f, 598.0f}, 48.0f, 2, WHITE);
 
-                const char *highscoretext = TextFormat("HIGHEST SCORE: %d", highestscore);
+                const char *highscoretext = TextFormat("HIGHEST SCORE: %d", leaderboard[0]);
                 DrawTextEx(customfont, highscoretext, (Vector2){600.0f, 650.0f}, 48.0f, 2, BLACK);
                 DrawTextEx(customfont, highscoretext, (Vector2){598.0f, 648.0f}, 48.0f, 2, GOLD);
 
