@@ -112,12 +112,14 @@ int main(void)
 
     // loading all audio, textures, fonts
     Music bgmusic = LoadMusicStream("assets/audio/Game Window.mp3");
+    Music menumusic=LoadMusicStream("assets/audio/Music (Menu Screen).mp3");
     Sound shootsound = LoadSound("assets/audio/Gun Shooting.ogg");
     Sound popsound = LoadSound("assets/audio/Balloon Pop.mp3");
     Sound gameoversound = LoadSound("assets/audio/Game Over.mp3");
     Sound clicksound = LoadSound("assets/audio/Button Click.wav");
+    
 
-    PlayMusicStream(bgmusic);
+    PlayMusicStream(menumusic);
 
     Texture2D menubackground = LoadTexture("assets/sprites/menuscreen.png");
     Texture2D background = LoadTexture("assets/sprites/gamescreen.png");
@@ -183,7 +185,8 @@ int main(void)
     while (!WindowShouldClose())
     {
         float dt = GetFrameTime();
-        UpdateMusicStream(bgmusic);
+        if(currentstate==GAME_PLAYING) UpdateMusicStream(bgmusic);
+        else UpdateMusicStream(menumusic);
         Vector2 mouseposition = GetMousePosition();
         Rectangle crossbutton = {WIDTH / 2.0f + 340.0f, HEIGHT / 2.0f - 240.0f, 40.0f, 40.0f};
         // game menu state
@@ -209,6 +212,8 @@ int main(void)
                 {
                     PlaySound(clicksound);
                     currentstate = GAME_PLAYING;
+                    StopMusicStream(menumusic);
+                    PlayMusicStream(bgmusic);
                 }
                 else if (CheckCollisionPointRec(mouseposition, exitbutton))
                 {
@@ -482,7 +487,7 @@ int main(void)
                     }
 
                     StopSound(gameoversound);
-                    PlayMusicStream(bgmusic);
+                    PlayMusicStream(menumusic);
                     currentstate = GAME_MENU;
                 }
             }
@@ -786,6 +791,7 @@ int main(void)
     UnloadSound(shootsound);
     UnloadSound(popsound);
     UnloadMusicStream(bgmusic);
+    UnloadMusicStream(menumusic);
     UnloadSound(gameoversound);
     UnloadSound(clicksound);
     CloseAudioDevice();
