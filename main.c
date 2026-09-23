@@ -197,7 +197,7 @@ int main(void)
     {
         for(int i=0; i<MAXLEADERBOARD;i++)
         {
-        if(fscanf(leaderboardfile, "%d", &leaderboard[i]!=1))
+        if(fscanf(leaderboardfile, "%d", &leaderboard[i])!=1)
         break;
         }
         fclose(leaderboardfile);
