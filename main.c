@@ -14,14 +14,13 @@
 #define MAXPOPUPS 5
 #define MAXARROWPOPUPS 5
 #define MAXLEADERBOARD 5
-
 // enum for gamestate
 typedef enum
 {
     GAME_MENU,
     GAME_PLAYING,
     GAME_HOWTOPLAY,
-    GAME_LEADERBOARD
+    GAME_HIGHESTSCORE
 } GameState;
 
 // structs for arrow, ballloons and popups
@@ -97,26 +96,26 @@ void SaveLeaderBoardScores(int leaderboard[])
     FILE *savefile = fopen("leaderboard.txt", "w");
     if (savefile != NULL)
     {
-        for (int i = 0; i < MAXLEADERBOARD; i++)
+        for(int i=0; i<MAXLEADERBOARD; i++)
         {
-            fprintf(savefile, "%d\n", leaderboard[i]);
+        fprintf(savefile, "%d\n", leaderboard[i]);
+        
         }
         fclose(savefile);
     }
 }
-
-// in correct order
+//in correct order
 void SortingScores(int leaderboard[], int newscore)
 {
-    if (newscore <= leaderboard[MAXLEADERBOARD - 1])
-        return;
-    int i = MAXLEADERBOARD - 1;
-    while (i > 0 && newscore > leaderboard[i - 1])
+    if(newscore<=leaderboard[MAXLEADERBOARD-1])
+    return;
+    int i=MAXLEADERBOARD-1;
+    while(i>0 && newscore > leaderboard[i-1])
     {
-        leaderboard[i] = leaderboard[i - 1];
+        leaderboard[i]=leaderboard[i-1];
         i--;
     }
-    leaderboard[i] = newscore;
+    leaderboard[i]=newscore;
 }
 
 int main(void)
@@ -130,17 +129,18 @@ int main(void)
 
     // loading all audio, textures, fonts
     Music bgmusic = LoadMusicStream("assets/audio/Game Window.mp3");
-    Music menumusic = LoadMusicStream("assets/audio/Music (Menu Screen).mp3");
+    Music menumusic=LoadMusicStream("assets/audio/Music (Menu Screen).mp3");
     Sound shootsound = LoadSound("assets/audio/Gun Shooting.ogg");
     Sound popsound = LoadSound("assets/audio/Balloon Pop.mp3");
     Sound gameoversound = LoadSound("assets/audio/Game Over.mp3");
     Sound clicksound = LoadSound("assets/audio/Button Click.wav");
+    
 
     PlayMusicStream(menumusic);
 
     Texture2D menubackground = LoadTexture("assets/sprites/menuscreen.png");
     Texture2D background = LoadTexture("assets/sprites/gamescreen.png");
-    Texture2D gameovertexture = LoadTexture("assets/sprites/gameover.png");
+    Texture2D gameovertexture = LoadTexture("assets/sprites/GAMEOVER - Copy.png");
     Texture2D bowimage = LoadTexture("assets/sprites/bow.png");
     Texture2D arrowimage = LoadTexture("assets/sprites/arrow.png");
     Texture2D arrowballoon = LoadTexture("assets/sprites/arrowballoon.png");
@@ -161,9 +161,9 @@ int main(void)
         spawnpoints[i] = (Vector2){1000.0f + i * 130.0f, HEIGHT + 50.0f};
     }
 
-    // arrays for popups, arrows and balloons
     Arrow arrow = {0};
     Balloon balloons[MAXBALLOONS] = {0};
+    // arrays for popups
     ScorePopUp scorepopup[MAXPOPUPS] = {0};
     ArrowPopUp arrowpopup[MAXARROWPOPUPS] = {0};
 
@@ -195,12 +195,10 @@ int main(void)
     FILE *leaderboardfile = fopen("leaderboard.txt", "r");
     if (leaderboardfile != NULL)
     {
-        for (int i = 0; i < MAXLEADERBOARD; i++)
+        for(int i=0; i<MAXLEADERBOARD;i++)
         {
-            if (fscanf(leaderboardfile, "%d", &leaderboard[i]) != 1)
-            {
-                break;
-            }
+        if(fscanf(leaderboardfile, "%d", &leaderboard[i])!=1)
+        break;
         }
         fclose(leaderboardfile);
     }
@@ -208,11 +206,10 @@ int main(void)
     while (!WindowShouldClose())
     {
         float dt = GetFrameTime();
-        if (currentstate == GAME_PLAYING)
-            UpdateMusicStream(bgmusic);
-        else
-            UpdateMusicStream(menumusic);
+        if(currentstate==GAME_PLAYING) UpdateMusicStream(bgmusic);
+        else UpdateMusicStream(menumusic);
         Vector2 mouseposition = GetMousePosition();
+        Rectangle crossbutton = {WIDTH / 2.0f + 340.0f, HEIGHT / 2.0f - 240.0f, 40.0f, 40.0f};
         // game menu state
         if (currentstate == GAME_MENU)
         {
@@ -220,12 +217,12 @@ int main(void)
 
             Rectangle startbutton = {WIDTH / 2.0f - 120.0f, 350.0f, 260.0f, 50.0f};
             Rectangle howtoplaybutton = {WIDTH / 2.0f - 150.0f, 420.0f, 380.0f, 50.0f};
-            Rectangle leaderboardbutton = {WIDTH / 2.0f - 150.0f, 490.0f, 420.0f, 50.0f};
+            Rectangle highestscorebutton = {WIDTH / 2.0f - 150.0f, 490.0f, 420.0f, 50.0f};
             Rectangle exitbutton = {WIDTH / 2.0f - 90.0f, 560.0f, 200.0f, 50.0f};
 
             if (CheckCollisionPointRec(mouseposition, startbutton) ||
                 CheckCollisionPointRec(mouseposition, howtoplaybutton) ||
-                CheckCollisionPointRec(mouseposition, leaderboardbutton) ||
+                CheckCollisionPointRec(mouseposition, highestscorebutton) ||
                 CheckCollisionPointRec(mouseposition, exitbutton))
             {
                 SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
@@ -249,10 +246,10 @@ int main(void)
                     PlaySound(clicksound);
                     currentstate = GAME_HOWTOPLAY;
                 }
-                else if (CheckCollisionPointRec(mouseposition, leaderboardbutton))
+                else if (CheckCollisionPointRec(mouseposition, highestscorebutton))
                 {
                     PlaySound(clicksound);
-                    currentstate = GAME_LEADERBOARD;
+                    currentstate = GAME_HIGHESTSCORE;
                 }
             }
         }
@@ -429,6 +426,7 @@ int main(void)
                         PlaySound(gameoversound);
                         SortingScores(leaderboard, score);
                         SaveLeaderBoardScores(leaderboard);
+                       
                     }
                     else if (balloons[i].gold == true)
                     {
@@ -525,12 +523,13 @@ int main(void)
                 currentstate = GAME_MENU;
             }
         }
-        else if (currentstate == GAME_LEADERBOARD)
+        else if (currentstate == GAME_HIGHESTSCORE)
         {
             Rectangle crossbutton = {WIDTH / 2.0f + 340.0f, HEIGHT / 2.0f - 240.0f, 40.0f, 40.0f};
             SetMouseCursor(MOUSE_CURSOR_DEFAULT);
             if (CheckCollisionPointRec(mouseposition, crossbutton))
             {
+
                 SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
             }
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mouseposition, crossbutton))
@@ -554,18 +553,18 @@ int main(void)
             // Menu Option Rectangles
             Rectangle startbutton = {WIDTH / 2.0f - 120.0f, 350.0f, 260.0f, 50.0f};
             Rectangle howtoplaybutton = {WIDTH / 2.0f - 120.0f, 420.0f, 380.0f, 50.0f};
-            Rectangle leaderboardbutton = {WIDTH / 2.0f - 120.0f, 490.0f, 420.0f, 50.0f};
+            Rectangle highestscorebutton = {WIDTH / 2.0f - 120.0f, 490.0f, 420.0f, 50.0f};
             Rectangle exitbutton = {WIDTH / 2.0f - 90.0f, 560.0f, 200.0f, 50.0f};
 
             Color startcolor = CheckCollisionPointRec(mouseposition, startbutton) ? GOLD : BLACK;
             Color howtoplaycolor = CheckCollisionPointRec(mouseposition, howtoplaybutton) ? GOLD : BLACK;
-            Color highestscorecolor = CheckCollisionPointRec(mouseposition, leaderboardbutton) ? GOLD : BLACK;
+            Color highestscorecolor = CheckCollisionPointRec(mouseposition, highestscorebutton) ? GOLD : BLACK;
             Color exitcolor = CheckCollisionPointRec(mouseposition, exitbutton) ? GOLD : BLACK;
 
             // Text coordinates
             DrawTextEx(customfont, "PLAY", (Vector2){WIDTH / 2.0f - 50.0f, 350.0f}, 48, 2, startcolor);
             DrawTextEx(customfont, "HOW TO PLAY", (Vector2){WIDTH / 2.0f - 120.0f, 420.0f}, 48, 2, howtoplaycolor);
-            DrawTextEx(customfont, "LEADERBOARD", (Vector2){WIDTH / 2.0f - 120.0f, 490.0f}, 48, 2, highestscorecolor);
+            DrawTextEx(customfont, "LEADERBOARD", (Vector2){WIDTH / 2.0f - 130.0f, 490.0f}, 48, 2, highestscorecolor);
             DrawTextEx(customfont, "EXIT", (Vector2){WIDTH / 2.0f - 50.0f, 560.0f}, 48, 2, exitcolor);
         }
         else if (currentstate == GAME_HOWTOPLAY)
@@ -602,7 +601,7 @@ int main(void)
                 DrawTextEx(customfont, instructions[i], (Vector2){WIDTH / 2.0f - 380.0f, linepositionY}, 32, 2, textcolor);
             }
         }
-        else if (currentstate == GAME_LEADERBOARD)
+        else if (currentstate == GAME_HIGHESTSCORE)
         {
             Rectangle menusource = {0.0f, 0.0f, (float)menubackground.width, (float)menubackground.height};
             Rectangle menudest = {0.0f, 0.0f, (float)WIDTH, (float)HEIGHT};
@@ -619,11 +618,11 @@ int main(void)
 
             const char *titletext = "LEADERBOARD";
             DrawTextEx(customfont, titletext, (Vector2){WIDTH / 2.0f - 160.0f, HEIGHT / 2.0f - 150.0f}, 54, 2, (Color){60, 38, 22, 255});
-
-            for (int i = 0; i < MAXLEADERBOARD; i++)
+            
+            for(int i=0; i<MAXLEADERBOARD;i++)
             {
-                const char *ranktext = TextFormat("%d. %d", i + 1, leaderboard[i]);
-                DrawTextEx(customfont, ranktext, (Vector2){WIDTH / 2.0f - 100.0f, HEIGHT / 2.0f - 60.0f + i * 55.0f}, 42, 2, (Color){60, 38, 22, 255});
+                const char*ranktext=TextFormat("%d. %d", i+1, leaderboard[i]);
+                DrawTextEx(customfont, ranktext, (Vector2){WIDTH/2.0f-100.0f, HEIGHT/2.0f-60.0f+i*55.0f}, 42, 2, (Color){60, 38, 22, 255});
             }
         }
         else if (currentstate == GAME_PLAYING)
@@ -759,8 +758,8 @@ int main(void)
             // gameover screen
             if (gameover == true)
             {
-                // float gameoverwidth = (float)gameovertexture.width * 1.8f;
-                // float gameoverheight = (float)gameovertexture.height * 1.8f;
+                //float gameoverwidth = (float)gameovertexture.width * 1.8f;
+                //float gameoverheight = (float)gameovertexture.height * 1.8f;
                 Rectangle gameoversource = {0.0f, 0.0f, (float)gameovertexture.width, (float)gameovertexture.height};
                 Rectangle gameoverdest = {415.0f, 180.0f, gameovertexture.width, gameovertexture.height};
                 Vector2 gameoverorigin = {0.0f, 0.0f};
