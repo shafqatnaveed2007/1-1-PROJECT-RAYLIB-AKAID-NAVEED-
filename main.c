@@ -20,7 +20,7 @@ typedef enum
     GAME_MENU,
     GAME_PLAYING,
     GAME_HOWTOPLAY,
-    GAME_HIGHESTSCORE,
+    GAME_LEADERBOARD,
     GAME_CREDITS
 } GameState;
 
@@ -217,14 +217,14 @@ int main(void)
             SetMouseCursor(MOUSE_CURSOR_DEFAULT);
 
             Rectangle startbutton = {WIDTH / 2.0f - 120.0f, 350.0f, 260.0f, 50.0f};
-            Rectangle howtoplaybutton = {WIDTH / 2.0f - 150.0f, 420.0f, 380.0f, 50.0f};
-            Rectangle highestscorebutton = {WIDTH / 2.0f - 150.0f, 490.0f, 420.0f, 50.0f};
+            Rectangle howtoplaybutton = {WIDTH / 2.0f - 120.0f, 420.0f, 380.0f, 50.0f};
+            Rectangle leaderboardbutton = {WIDTH / 2.0f - 120.0f, 490.0f, 420.0f, 50.0f};
             Rectangle creditsbutton = {WIDTH / 2.0f - 100.0f, 560.0f, 260.0f, 50.0f};
             Rectangle exitbutton = {WIDTH / 2.0f - 90.0f, 630.0f, 200.0f, 50.0f};
 
             if (CheckCollisionPointRec(mouseposition, startbutton) ||
                 CheckCollisionPointRec(mouseposition, howtoplaybutton) ||
-                CheckCollisionPointRec(mouseposition, highestscorebutton) ||
+                CheckCollisionPointRec(mouseposition, leaderboardbutton) ||
                 CheckCollisionPointRec(mouseposition, creditsbutton) ||
                 CheckCollisionPointRec(mouseposition, exitbutton))
             {
@@ -249,17 +249,16 @@ int main(void)
                     PlaySound(clicksound);
                     currentstate = GAME_HOWTOPLAY;
                 }
-                else if (CheckCollisionPointRec(mouseposition, highestscorebutton))
+                else if (CheckCollisionPointRec(mouseposition, leaderboardbutton))
                 {
                     PlaySound(clicksound);
-                    currentstate = GAME_HIGHESTSCORE;
+                    currentstate = GAME_LEADERBOARD;
                 }
                 else if (CheckCollisionPointRec(mouseposition, creditsbutton))
                 {
                     PlaySound(clicksound);
                     currentstate = GAME_CREDITS;
                 }
-                
             }
         }
         else if (currentstate == GAME_PLAYING)
@@ -531,7 +530,7 @@ int main(void)
                 currentstate = GAME_MENU;
             }
         }
-        else if (currentstate == GAME_HIGHESTSCORE)
+        else if (currentstate == GAME_LEADERBOARD)
         {
             Rectangle crossbutton = {WIDTH / 2.0f + 340.0f, HEIGHT / 2.0f - 240.0f, 40.0f, 40.0f};
             SetMouseCursor(MOUSE_CURSOR_DEFAULT);
@@ -548,7 +547,7 @@ int main(void)
         }
         else if (currentstate == GAME_CREDITS)
         {
-            Rectangle crossbutton = {WIDTH / 2.0f + 340.0f, HEIGHT / 2.0f - 240.0f, 40.0f, 40.0f};
+            Rectangle crossbutton = {WIDTH / 2.0f + 390.0f, HEIGHT / 2.0f - 340.0f, 40.0f, 40.0f};
             SetMouseCursor(MOUSE_CURSOR_DEFAULT);
             if (CheckCollisionPointRec(mouseposition, crossbutton))
             {
@@ -576,13 +575,13 @@ int main(void)
             // Menu Option Rectangles
             Rectangle startbutton = {WIDTH / 2.0f - 120.0f, 350.0f, 260.0f, 50.0f};
             Rectangle howtoplaybutton = {WIDTH / 2.0f - 120.0f, 420.0f, 380.0f, 50.0f};
-            Rectangle highestscorebutton = {WIDTH / 2.0f - 120.0f, 490.0f, 420.0f, 50.0f};
-            Rectangle creditsbutton = {WIDTH / 2.0f - 100.0f, 560.0f, 260.0f, 50.0f};
+            Rectangle leaderboardbutton = {WIDTH / 2.0f - 105.0f, 490.0f, 420.0f, 50.0f};
+            Rectangle creditsbutton = {WIDTH / 2.0f - 85.0f, 560.0f, 260.0f, 50.0f};
             Rectangle exitbutton = {WIDTH / 2.0f - 90.0f, 630.0f, 200.0f, 50.0f};
 
             Color startcolor = CheckCollisionPointRec(mouseposition, startbutton) ? GOLD : BLACK;
             Color howtoplaycolor = CheckCollisionPointRec(mouseposition, howtoplaybutton) ? GOLD : BLACK;
-            Color highestscorecolor = CheckCollisionPointRec(mouseposition, highestscorebutton) ? GOLD : BLACK;
+            Color highestscorecolor = CheckCollisionPointRec(mouseposition, leaderboardbutton) ? GOLD : BLACK;
             Color creditscolor = CheckCollisionPointRec(mouseposition, creditsbutton) ? GOLD : BLACK;
             Color exitcolor = CheckCollisionPointRec(mouseposition, exitbutton) ? GOLD : BLACK;
 
@@ -627,7 +626,7 @@ int main(void)
                 DrawTextEx(customfont, instructions[i], (Vector2){WIDTH / 2.0f - 380.0f, linepositionY}, 32, 2, textcolor);
             }
         }
-        else if (currentstate == GAME_HIGHESTSCORE)
+        else if (currentstate == GAME_LEADERBOARD)
         {
             Rectangle menusource = {0.0f, 0.0f, (float)menubackground.width, (float)menubackground.height};
             Rectangle menudest = {0.0f, 0.0f, (float)WIDTH, (float)HEIGHT};
@@ -651,7 +650,7 @@ int main(void)
                 DrawTextEx(customfont, ranktext, (Vector2){WIDTH / 2.0f - 100.0f, HEIGHT / 2.0f - 60.0f + i * 55.0f}, 42, 2, (Color){60, 38, 22, 255});
             }
         }
-        else if(currentstate==GAME_CREDITS)
+        else if (currentstate == GAME_CREDITS)
         {
             Rectangle menusource = {0.0f, 0.0f, (float)menubackground.width, (float)menubackground.height};
             Rectangle menudest = {0.0f, 0.0f, (float)WIDTH, (float)HEIGHT};
@@ -662,43 +661,38 @@ int main(void)
             Rectangle creditspanel = {WIDTH / 2 - 450, HEIGHT / 2 - 350, 900, 700};
             DrawRectangleRounded(creditspanel, 0.05f, 8, (Color){245, 235, 210, 255});
 
-             Rectangle crossbutton = {WIDTH / 2.0f + 340.0f, HEIGHT / 2.0f - 240.0f, 40.0f, 40.0f};
-             Color crossbuttoncolor = CheckCollisionPointRec(mouseposition, crossbutton) ? GOLD : BLACK;
-             DrawTextEx(customfont, "X", (Vector2){WIDTH / 2.0f + 350.0f, HEIGHT / 2.0f - 235.0f}, 32, 2, crossbuttoncolor);
-           
+            Rectangle crossbutton = {WIDTH / 2.0f + 390.0f, HEIGHT / 2.0f - 340.0f, 40.0f, 40.0f};
+            Color crossbuttoncolor = CheckCollisionPointRec(mouseposition, crossbutton) ? GOLD : BLACK;
+            DrawTextEx(customfont, "X", (Vector2){WIDTH / 2.0f + 400.0f, HEIGHT / 2.0f - 335.0f}, 32, 2, crossbuttoncolor);
 
-            
-
-            const char*creditslines[]={
+            const char *creditslines[] = {
                 "CREDITS",
-                 "",
-                 "Music: Menu Theme - ___________",
-                 "Music: Gameplay Theme - ___________",
-                 "",
-                 "SFX: Bow Shot - ___________",
-                 "SFX: Balloon Pop - ___________",
-                 "SFX: Game Over - ___________",
-                 "SFX: Button Click - ___________",
-                 "",
-                 "Font: Carnival - ___________",
-                 "",
-                 "Art: Backgrounds, Bow, Arrow, Balloons, Boy - ___________",
-                 "",
-                 "Special Thanks: to our Advisor ___________",
-                 "",
-                 "Made by AKAID ADNAN & SHAFQAT NAVEED",
-                 };
-                int creditslinecount = sizeof(creditslines) / sizeof(creditslines[0]);
-                for(int i=0; i<creditslinecount;i++)
-                {
-                    float linepositionY = HEIGHT / 2.0f - 320.0f + (i * 36.0f);
-                    Color textcolor = (Color){60, 38, 22, 255};
-                    DrawTextEx(customfont, creditslines[i], (Vector2){WIDTH / 2.0f - 400.0f, linepositionY}, 28, 2, textcolor);
-                }
-
+                "",
+                "Music: Menu Theme - Mario Kart Theme Song",
+                "Music: Gameplay Theme - Sounds Monarch on YouTube",
+                "",
+                "SFX: Bow Shot - Freesound.org",
+                "SFX: Balloon Pop - Freesound.org",
+                "SFX: Game Over - Freesound.org",
+                "SFX: Button Click - Freesound.org",
+                "",
+                "Font: Carnival - ",
+                "",
+                "Art: Backgrounds, Bow, Arrow, Balloons, Boy - ___________",
+                "",
+                "Special Thanks: to our Supervisor Zim Mim Siddiqee Sir",
+                "",
+                "Made by AKAID ADNAN & SHAFQAT NAVEED",
+            };
+            int creditslinecount = sizeof(creditslines) / sizeof(creditslines[0]);
+            for (int i = 0; i < creditslinecount; i++)
+            {
+                float linepositionY = HEIGHT / 2.0f - 320.0f + (i * 36.0f);
+                Color textcolor = (Color){60, 38, 22, 255};
+                DrawTextEx(customfont, creditslines[i], (Vector2){WIDTH / 2.0f - 400.0f, linepositionY}, 28, 2, textcolor);
             }
+        }
 
-        
         else if (currentstate == GAME_PLAYING)
         {
             Rectangle bgsource = {0.0f, 0.0f, (float)background.width, (float)background.height};
@@ -798,8 +792,8 @@ int main(void)
             DrawTextEx(customfont, TextFormat("SCORE: %d", score), (Vector2){30, 25}, 42, 2, WHITE);
             DrawTextEx(customfont, TextFormat("ARROWS: %d", arrowsleft), (Vector2){32, 73}, 42, 2, BLACK);
             DrawTextEx(customfont, TextFormat("ARROWS: %d", arrowsleft), (Vector2){30, 75}, 42, 2, GOLD);
-            DrawTextEx(customfont, TextFormat("HIGH SCORE: %d", leaderboard[0]), (Vector2){32, 123}, 42, 2, BLACK);
-            DrawTextEx(customfont, TextFormat("HIGH SCORE: %d", leaderboard[0]), (Vector2){30, 125}, 42, 2, WHITE);
+            DrawTextEx(customfont, TextFormat("HIGHEST SCORE: %d", leaderboard[0]), (Vector2){32, 123}, 42, 2, BLACK);
+            DrawTextEx(customfont, TextFormat("HIGHEST SCORE: %d", leaderboard[0]), (Vector2){30, 125}, 42, 2, WHITE);
 
             DrawTextEx(customfont, TextFormat("ANGLE: %.2f", -(aimangle * RAD2DEG)), (Vector2){32, 671}, 42, 2, BLACK);
             DrawTextEx(customfont, TextFormat("ANGLE: %.2f", -(aimangle * RAD2DEG)), (Vector2){30, 673}, 42, 2, WHITE);
@@ -832,10 +826,10 @@ int main(void)
             // gameover screen
             if (gameover == true)
             {
-                // float gameoverwidth = (float)gameovertexture.width * 1.8f;
-                // float gameoverheight = (float)gameovertexture.height * 1.8f;
+                float gameoverwidth = (float)gameovertexture.width * 1.8f;
+                float gameoverheight = (float)gameovertexture.height * 1.8f;
                 Rectangle gameoversource = {0.0f, 0.0f, (float)gameovertexture.width, (float)gameovertexture.height};
-                Rectangle gameoverdest = {415.0f, 180.0f, gameovertexture.width, gameovertexture.height};
+                Rectangle gameoverdest = {415.0f, 180.0f, gameoverwidth, gameoverheight};
                 Vector2 gameoverorigin = {0.0f, 0.0f};
                 DrawTexturePro(gameovertexture, gameoversource, gameoverdest, gameoverorigin, 0.0f, WHITE);
 
