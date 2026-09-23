@@ -96,26 +96,25 @@ void SaveLeaderBoardScores(int leaderboard[])
     FILE *savefile = fopen("leaderboard.txt", "w");
     if (savefile != NULL)
     {
-        for(int i=0; i<MAXLEADERBOARD; i++)
+        for (int i = 0; i < MAXLEADERBOARD; i++)
         {
-        fprintf(savefile, "%d\n", leaderboard[i]);
-        
+            fprintf(savefile, "%d\n", leaderboard[i]);
         }
         fclose(savefile);
     }
 }
-//in correct order
+// in correct order
 void SortingScores(int leaderboard[], int newscore)
 {
-    if(newscore<=leaderboard[MAXLEADERBOARD-1])
-    return;
-    int i=MAXLEADERBOARD-1;
-    while(i>0 && newscore > leaderboard[i-1])
+    if (newscore <= leaderboard[MAXLEADERBOARD - 1])
+        return;
+    int i = MAXLEADERBOARD - 1;
+    while (i > 0 && newscore > leaderboard[i - 1])
     {
-        leaderboard[i]=leaderboard[i-1];
+        leaderboard[i] = leaderboard[i - 1];
         i--;
     }
-    leaderboard[i]=newscore;
+    leaderboard[i] = newscore;
 }
 
 int main(void)
@@ -129,18 +128,17 @@ int main(void)
 
     // loading all audio, textures, fonts
     Music bgmusic = LoadMusicStream("assets/audio/Game Window.mp3");
-    Music menumusic=LoadMusicStream("assets/audio/Music (Menu Screen).mp3");
+    Music menumusic = LoadMusicStream("assets/audio/Music (Menu Screen).mp3");
     Sound shootsound = LoadSound("assets/audio/Gun Shooting.ogg");
     Sound popsound = LoadSound("assets/audio/Balloon Pop.mp3");
     Sound gameoversound = LoadSound("assets/audio/Game Over.mp3");
     Sound clicksound = LoadSound("assets/audio/Button Click.wav");
-    
 
     PlayMusicStream(menumusic);
 
     Texture2D menubackground = LoadTexture("assets/sprites/menuscreen.png");
     Texture2D background = LoadTexture("assets/sprites/gamescreen.png");
-    Texture2D gameovertexture = LoadTexture("assets/sprites/GAMEOVER - Copy.png");
+    Texture2D gameovertexture = LoadTexture("assets/sprites/gameover.png");
     Texture2D bowimage = LoadTexture("assets/sprites/bow.png");
     Texture2D arrowimage = LoadTexture("assets/sprites/arrow.png");
     Texture2D arrowballoon = LoadTexture("assets/sprites/arrowballoon.png");
@@ -195,10 +193,10 @@ int main(void)
     FILE *leaderboardfile = fopen("leaderboard.txt", "r");
     if (leaderboardfile != NULL)
     {
-        for(int i=0; i<MAXLEADERBOARD;i++)
+        for (int i = 0; i < MAXLEADERBOARD; i++)
         {
-        if(fscanf(leaderboardfile, "%d", &leaderboard[i])!=1)
-        break;
+            if (fscanf(leaderboardfile, "%d", &leaderboard[i]) != 1)
+                break;
         }
         fclose(leaderboardfile);
     }
@@ -206,8 +204,10 @@ int main(void)
     while (!WindowShouldClose())
     {
         float dt = GetFrameTime();
-        if(currentstate==GAME_PLAYING) UpdateMusicStream(bgmusic);
-        else UpdateMusicStream(menumusic);
+        if (currentstate == GAME_PLAYING)
+            UpdateMusicStream(bgmusic);
+        else
+            UpdateMusicStream(menumusic);
         Vector2 mouseposition = GetMousePosition();
         Rectangle crossbutton = {WIDTH / 2.0f + 340.0f, HEIGHT / 2.0f - 240.0f, 40.0f, 40.0f};
         // game menu state
@@ -426,7 +426,6 @@ int main(void)
                         PlaySound(gameoversound);
                         SortingScores(leaderboard, score);
                         SaveLeaderBoardScores(leaderboard);
-                       
                     }
                     else if (balloons[i].gold == true)
                     {
@@ -618,11 +617,11 @@ int main(void)
 
             const char *titletext = "LEADERBOARD";
             DrawTextEx(customfont, titletext, (Vector2){WIDTH / 2.0f - 160.0f, HEIGHT / 2.0f - 150.0f}, 54, 2, (Color){60, 38, 22, 255});
-            
-            for(int i=0; i<MAXLEADERBOARD;i++)
+
+            for (int i = 0; i < MAXLEADERBOARD; i++)
             {
-                const char*ranktext=TextFormat("%d. %d", i+1, leaderboard[i]);
-                DrawTextEx(customfont, ranktext, (Vector2){WIDTH/2.0f-100.0f, HEIGHT/2.0f-60.0f+i*55.0f}, 42, 2, (Color){60, 38, 22, 255});
+                const char *ranktext = TextFormat("%d. %d", i + 1, leaderboard[i]);
+                DrawTextEx(customfont, ranktext, (Vector2){WIDTH / 2.0f - 100.0f, HEIGHT / 2.0f - 60.0f + i * 55.0f}, 42, 2, (Color){60, 38, 22, 255});
             }
         }
         else if (currentstate == GAME_PLAYING)
@@ -758,8 +757,8 @@ int main(void)
             // gameover screen
             if (gameover == true)
             {
-                //float gameoverwidth = (float)gameovertexture.width * 1.8f;
-                //float gameoverheight = (float)gameovertexture.height * 1.8f;
+                // float gameoverwidth = (float)gameovertexture.width * 1.8f;
+                // float gameoverheight = (float)gameovertexture.height * 1.8f;
                 Rectangle gameoversource = {0.0f, 0.0f, (float)gameovertexture.width, (float)gameovertexture.height};
                 Rectangle gameoverdest = {415.0f, 180.0f, gameovertexture.width, gameovertexture.height};
                 Vector2 gameoverorigin = {0.0f, 0.0f};
