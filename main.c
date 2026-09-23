@@ -176,6 +176,7 @@ int main(void)
     float pulldistance = 0.0f;
     float launchspeed = 0.0f;
     bool gameover = false;
+    bool ismuted = false;
 
     // balloon sizes
     float normalballoonwidth = 140.0f;
@@ -221,12 +222,14 @@ int main(void)
             Rectangle leaderboardbutton = {WIDTH / 2.0f - 120.0f, 490.0f, 420.0f, 50.0f};
             Rectangle creditsbutton = {WIDTH / 2.0f - 100.0f, 560.0f, 260.0f, 50.0f};
             Rectangle exitbutton = {WIDTH / 2.0f - 90.0f, 630.0f, 200.0f, 50.0f};
+            Rectangle mutebutton = {WIDTH - 190.0f, 30.0f, 160.0f, 50.0f};
 
             if (CheckCollisionPointRec(mouseposition, startbutton) ||
                 CheckCollisionPointRec(mouseposition, howtoplaybutton) ||
                 CheckCollisionPointRec(mouseposition, leaderboardbutton) ||
                 CheckCollisionPointRec(mouseposition, creditsbutton) ||
-                CheckCollisionPointRec(mouseposition, exitbutton))
+                CheckCollisionPointRec(mouseposition, exitbutton) ||
+                CheckCollisionPointRec(mouseposition, mutebutton))
             {
                 SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
             }
@@ -259,11 +262,31 @@ int main(void)
                     PlaySound(clicksound);
                     currentstate = GAME_CREDITS;
                 }
+                else if (CheckCollisionPointRec(mouseposition, mutebutton))
+                {
+                    PlaySound(clicksound);
+                    ismuted = !ismuted;
+                    SetMasterVolume(ismuted ? 0.0f : 1.0f);
+                }
             }
         }
         else if (currentstate == GAME_PLAYING)
         {
             SetMouseCursor(MOUSE_CURSOR_DEFAULT);
+
+            // mute button (bottom right, active whether or not the game is over)
+            Rectangle mutebutton = {WIDTH - 190.0f, HEIGHT - 80.0f, 160.0f, 50.0f};
+            bool mutehovered = CheckCollisionPointRec(mouseposition, mutebutton);
+            if (mutehovered)
+            {
+                SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
+            }
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && mutehovered)
+            {
+                PlaySound(clicksound);
+                ismuted = !ismuted;
+                SetMasterVolume(ismuted ? 0.0f : 1.0f);
+            }
 
             // bow and arrow settings
             Vector2 arrowpivot = {280.0f, 590.0f};
@@ -275,7 +298,7 @@ int main(void)
             float pullspeed = 100.0f;
 
             // aiming, pulling back and shooting arrow
-            if (arrowsleft > 0 && gameover == false)
+            if (arrowsleft > 0 && gameover == false && mutehovered == false)
             {
 
                 float mousepointerangle = atan2f(mouseposition.y - arrowpivot.y, mouseposition.x - arrowpivot.x);
@@ -591,6 +614,14 @@ int main(void)
             DrawTextEx(customfont, "LEADERBOARD", (Vector2){WIDTH / 2.0f - 130.0f, 490.0f}, 48, 2, highestscorecolor);
             DrawTextEx(customfont, "CREDITS", (Vector2){WIDTH / 2.0f - 90.0f, 560.0f}, 48, 2, creditscolor);
             DrawTextEx(customfont, "EXIT", (Vector2){WIDTH / 2.0f - 50.0f, 630.0f}, 48, 2, exitcolor);
+
+            // mute/unmute button
+            Rectangle mutebutton = {WIDTH - 190.0f, 30.0f, 160.0f, 50.0f};
+            bool mutehovered = CheckCollisionPointRec(mouseposition, mutebutton);
+            Color mutebuttoncolor = mutehovered ? GOLD : RAYWHITE;
+            DrawRectangleRounded(mutebutton, 0.3f, 4, (Color){0, 0, 0, 150});
+            DrawRectangleRoundedLines(mutebutton, 0.3f, 16, mutebuttoncolor);
+            DrawTextEx(customfont, ismuted ? "UNMUTE" : "MUTE", (Vector2){mutebutton.x + 15.0f, mutebutton.y + 11.0f}, 28, 2, mutebuttoncolor);
         }
         else if (currentstate == GAME_HOWTOPLAY)
         {
@@ -792,13 +823,22 @@ int main(void)
             DrawTextEx(customfont, TextFormat("SCORE: %d", score), (Vector2){30, 25}, 42, 2, WHITE);
             DrawTextEx(customfont, TextFormat("ARROWS: %d", arrowsleft), (Vector2){32, 73}, 42, 2, BLACK);
             DrawTextEx(customfont, TextFormat("ARROWS: %d", arrowsleft), (Vector2){30, 75}, 42, 2, GOLD);
-            DrawTextEx(customfont, TextFormat("HIGHEST SCORE: %d", leaderboard[0]), (Vector2){32, 123}, 42, 2, BLACK);
-            DrawTextEx(customfont, TextFormat("HIGHEST SCORE: %d", leaderboard[0]), (Vector2){30, 125}, 42, 2, WHITE);
+            float currentballoonspeed = 150.0f + score * 0.75f;
+            DrawTextEx(customfont, TextFormat("BALLOON SPEED: %.2f", currentballoonspeed), (Vector2){32, 123}, 42, 2, BLACK);
+            DrawTextEx(customfont, TextFormat("BALLOON SPEED: %.2f", currentballoonspeed), (Vector2){30, 125}, 42, 2, WHITE);
 
             DrawTextEx(customfont, TextFormat("ANGLE: %.2f", -(aimangle * RAD2DEG)), (Vector2){32, 671}, 42, 2, BLACK);
             DrawTextEx(customfont, TextFormat("ANGLE: %.2f", -(aimangle * RAD2DEG)), (Vector2){30, 673}, 42, 2, WHITE);
             DrawTextEx(customfont, TextFormat("LAUNCH SPEED: %.2f", launchspeed), (Vector2){32, 721}, 42, 2, BLACK);
             DrawTextEx(customfont, TextFormat("LAUNCH SPEED: %.2f", launchspeed), (Vector2){30, 723}, 42, 2, GOLD);
+
+            // mute/unmute button (bottom right — well clear of the top-right "MAIN MENU" button shown on game over)
+            Rectangle mutebutton = {WIDTH - 190.0f, HEIGHT - 80.0f, 160.0f, 50.0f};
+            bool mutehovered = CheckCollisionPointRec(mouseposition, mutebutton);
+            Color mutebuttoncolor = mutehovered ? GOLD : RAYWHITE;
+            DrawRectangleRounded(mutebutton, 0.3f, 4, (Color){0, 0, 0, 150});
+            DrawRectangleRoundedLines(mutebutton, 0.3f, 16, mutebuttoncolor);
+            DrawTextEx(customfont, ismuted ? "UNMUTE" : "MUTE", (Vector2){mutebutton.x + 15.0f, mutebutton.y + 11.0f}, 28, 2, mutebuttoncolor);
 
             // drawing scorepopups
             for (int i = 0; i < MAXPOPUPS; i++)
@@ -826,10 +866,8 @@ int main(void)
             // gameover screen
             if (gameover == true)
             {
-                float gameoverwidth = (float)gameovertexture.width * 1.8f;
-                float gameoverheight = (float)gameovertexture.height * 1.8f;
                 Rectangle gameoversource = {0.0f, 0.0f, (float)gameovertexture.width, (float)gameovertexture.height};
-                Rectangle gameoverdest = {415.0f, 180.0f, gameoverwidth, gameoverheight};
+                Rectangle gameoverdest = {415.0f, 180.0f, gameovertexture.width, gameovertexture.height};
                 Vector2 gameoverorigin = {0.0f, 0.0f};
                 DrawTexturePro(gameovertexture, gameoversource, gameoverdest, gameoverorigin, 0.0f, WHITE);
 
