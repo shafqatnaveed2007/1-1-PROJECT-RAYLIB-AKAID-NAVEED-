@@ -20,7 +20,8 @@ typedef enum
     GAME_MENU,
     GAME_PLAYING,
     GAME_HOWTOPLAY,
-    GAME_HIGHESTSCORE
+    GAME_HIGHESTSCORE,
+    GAME_CREDITS
 } GameState;
 
 // structs for arrow, ballloons and popups
@@ -218,11 +219,13 @@ int main(void)
             Rectangle startbutton = {WIDTH / 2.0f - 120.0f, 350.0f, 260.0f, 50.0f};
             Rectangle howtoplaybutton = {WIDTH / 2.0f - 150.0f, 420.0f, 380.0f, 50.0f};
             Rectangle highestscorebutton = {WIDTH / 2.0f - 150.0f, 490.0f, 420.0f, 50.0f};
-            Rectangle exitbutton = {WIDTH / 2.0f - 90.0f, 560.0f, 200.0f, 50.0f};
+            Rectangle creditsbutton = {WIDTH / 2.0f - 100.0f, 560.0f, 260.0f, 50.0f};
+            Rectangle exitbutton = {WIDTH / 2.0f - 90.0f, 630.0f, 200.0f, 50.0f};
 
             if (CheckCollisionPointRec(mouseposition, startbutton) ||
                 CheckCollisionPointRec(mouseposition, howtoplaybutton) ||
                 CheckCollisionPointRec(mouseposition, highestscorebutton) ||
+                CheckCollisionPointRec(mouseposition, creditsbutton) ||
                 CheckCollisionPointRec(mouseposition, exitbutton))
             {
                 SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
@@ -251,6 +254,12 @@ int main(void)
                     PlaySound(clicksound);
                     currentstate = GAME_HIGHESTSCORE;
                 }
+                else if (CheckCollisionPointRec(mouseposition, creditsbutton))
+                {
+                    PlaySound(clicksound);
+                    currentstate = GAME_CREDITS;
+                }
+                
             }
         }
         else if (currentstate == GAME_PLAYING)
@@ -537,6 +546,21 @@ int main(void)
                 currentstate = GAME_MENU;
             }
         }
+        else if (currentstate == GAME_CREDITS)
+        {
+            Rectangle crossbutton = {WIDTH / 2.0f + 340.0f, HEIGHT / 2.0f - 240.0f, 40.0f, 40.0f};
+            SetMouseCursor(MOUSE_CURSOR_DEFAULT);
+            if (CheckCollisionPointRec(mouseposition, crossbutton))
+            {
+
+                SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
+            }
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mouseposition, crossbutton))
+            {
+                PlaySound(clicksound);
+                currentstate = GAME_MENU;
+            }
+        }
 
         // all drawings
         BeginDrawing();
@@ -553,18 +577,21 @@ int main(void)
             Rectangle startbutton = {WIDTH / 2.0f - 120.0f, 350.0f, 260.0f, 50.0f};
             Rectangle howtoplaybutton = {WIDTH / 2.0f - 120.0f, 420.0f, 380.0f, 50.0f};
             Rectangle highestscorebutton = {WIDTH / 2.0f - 120.0f, 490.0f, 420.0f, 50.0f};
-            Rectangle exitbutton = {WIDTH / 2.0f - 90.0f, 560.0f, 200.0f, 50.0f};
+            Rectangle creditsbutton = {WIDTH / 2.0f - 100.0f, 560.0f, 260.0f, 50.0f};
+            Rectangle exitbutton = {WIDTH / 2.0f - 90.0f, 630.0f, 200.0f, 50.0f};
 
             Color startcolor = CheckCollisionPointRec(mouseposition, startbutton) ? GOLD : BLACK;
             Color howtoplaycolor = CheckCollisionPointRec(mouseposition, howtoplaybutton) ? GOLD : BLACK;
             Color highestscorecolor = CheckCollisionPointRec(mouseposition, highestscorebutton) ? GOLD : BLACK;
+            Color creditscolor = CheckCollisionPointRec(mouseposition, creditsbutton) ? GOLD : BLACK;
             Color exitcolor = CheckCollisionPointRec(mouseposition, exitbutton) ? GOLD : BLACK;
 
             // Text coordinates
             DrawTextEx(customfont, "PLAY", (Vector2){WIDTH / 2.0f - 50.0f, 350.0f}, 48, 2, startcolor);
             DrawTextEx(customfont, "HOW TO PLAY", (Vector2){WIDTH / 2.0f - 120.0f, 420.0f}, 48, 2, howtoplaycolor);
             DrawTextEx(customfont, "LEADERBOARD", (Vector2){WIDTH / 2.0f - 130.0f, 490.0f}, 48, 2, highestscorecolor);
-            DrawTextEx(customfont, "EXIT", (Vector2){WIDTH / 2.0f - 50.0f, 560.0f}, 48, 2, exitcolor);
+            DrawTextEx(customfont, "CREDITS", (Vector2){WIDTH / 2.0f - 90.0f, 560.0f}, 48, 2, creditscolor);
+            DrawTextEx(customfont, "EXIT", (Vector2){WIDTH / 2.0f - 50.0f, 630.0f}, 48, 2, exitcolor);
         }
         else if (currentstate == GAME_HOWTOPLAY)
         {
@@ -624,6 +651,54 @@ int main(void)
                 DrawTextEx(customfont, ranktext, (Vector2){WIDTH / 2.0f - 100.0f, HEIGHT / 2.0f - 60.0f + i * 55.0f}, 42, 2, (Color){60, 38, 22, 255});
             }
         }
+        else if(currentstate==GAME_CREDITS)
+        {
+            Rectangle menusource = {0.0f, 0.0f, (float)menubackground.width, (float)menubackground.height};
+            Rectangle menudest = {0.0f, 0.0f, (float)WIDTH, (float)HEIGHT};
+            DrawTexturePro(menubackground, menusource, menudest, (Vector2){0.0f, 0.0f}, 0.0f, WHITE);
+
+            Color backgrounddim = {0, 0, 0, 150};
+            DrawRectangle(0, 0, WIDTH, HEIGHT, backgrounddim);
+            Rectangle creditspanel = {WIDTH / 2 - 450, HEIGHT / 2 - 350, 900, 700};
+            DrawRectangleRounded(creditspanel, 0.05f, 8, (Color){245, 235, 210, 255});
+
+             Rectangle crossbutton = {WIDTH / 2.0f + 340.0f, HEIGHT / 2.0f - 240.0f, 40.0f, 40.0f};
+             Color crossbuttoncolor = CheckCollisionPointRec(mouseposition, crossbutton) ? GOLD : BLACK;
+             DrawTextEx(customfont, "X", (Vector2){WIDTH / 2.0f + 350.0f, HEIGHT / 2.0f - 235.0f}, 32, 2, crossbuttoncolor);
+           
+
+            
+
+            const char*creditslines[]={
+                "CREDITS",
+                 "",
+                 "Music: Menu Theme - ___________",
+                 "Music: Gameplay Theme - ___________",
+                 "",
+                 "SFX: Bow Shot - ___________",
+                 "SFX: Balloon Pop - ___________",
+                 "SFX: Game Over - ___________",
+                 "SFX: Button Click - ___________",
+                 "",
+                 "Font: Carnival - ___________",
+                 "",
+                 "Art: Backgrounds, Bow, Arrow, Balloons, Boy - ___________",
+                 "",
+                 "Special Thanks: to our Advisor ___________",
+                 "",
+                 "Made by AKAID ADNAN & SHAFQAT NAVEED",
+                 };
+                int creditslinecount = sizeof(creditslines) / sizeof(creditslines[0]);
+                for(int i=0; i<creditslinecount;i++)
+                {
+                    float linepositionY = HEIGHT / 2.0f - 320.0f + (i * 36.0f);
+                    Color textcolor = (Color){60, 38, 22, 255};
+                    DrawTextEx(customfont, creditslines[i], (Vector2){WIDTH / 2.0f - 400.0f, linepositionY}, 28, 2, textcolor);
+                }
+
+            }
+
+        
         else if (currentstate == GAME_PLAYING)
         {
             Rectangle bgsource = {0.0f, 0.0f, (float)background.width, (float)background.height};
