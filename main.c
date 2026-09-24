@@ -107,7 +107,7 @@ void SaveLeaderBoardScores(int leaderboard[])
     }
 }
 
-// in correct order
+// sorting scores in leaderboard
 void SortingScores(int leaderboard[], int newscore)
 {
     if (newscore <= leaderboard[MAXLEADERBOARD - 1])
@@ -138,6 +138,7 @@ int main(void)
     Sound popsound = LoadSound("assets/audio/Balloon Pop.mp3");
     Sound gameoversound = LoadSound("assets/audio/Game Over.mp3");
     Sound clicksound = LoadSound("assets/audio/Button Click.wav");
+    Sound minusarrowssound = LoadSound("assets/audio/Minus arrows.wav");
 
     PlayMusicStream(menumusic);
 
@@ -155,6 +156,7 @@ int main(void)
         normalballoons[i] = LoadTexture(TextFormat("assets/sprites/normalballoon%d.png", i + 1));
     }
     Texture2D boytexture = LoadTexture("assets/sprites/boy.png");
+
     Font customfont = LoadFontEx("assets/fonts/Carnival Font.ttf", 96, NULL, 0);
 
     // init spawnpoints, arrow, balloons
@@ -164,16 +166,15 @@ int main(void)
         spawnpoints[i] = (Vector2){1000.0f + i * 130.0f, HEIGHT + 50.0f};
     }
 
+    // array init
     Arrow arrow = {0};
     Balloon balloons[MAXBALLOONS] = {0};
-
-    // arrays for popups
     ScorePopUp scorepopup[MAXPOPUPS] = {0};
     ArrowPopUp arrowpopup[MAXARROWPOPUPS] = {0};
+    int leaderboard[MAXLEADERBOARD] = {0};
 
     // init game variables
     int score = 0;
-    int leaderboard[MAXLEADERBOARD] = {0};
     int arrowsleft = 10;
     float gravity = 1000.0f;
     float currenttimer = 0.0f;
@@ -217,7 +218,6 @@ int main(void)
         else
             UpdateMusicStream(menumusic);
         Vector2 mouseposition = GetMousePosition();
-        Rectangle crossbutton = {WIDTH / 2.0f + 340.0f, HEIGHT / 2.0f - 240.0f, 40.0f, 40.0f};
 
         // game menu state
         if (currentstate == GAME_MENU)
@@ -282,7 +282,7 @@ int main(void)
         {
             SetMouseCursor(MOUSE_CURSOR_DEFAULT);
 
-            // mute button 
+            // mute button
             Rectangle mutebutton = {WIDTH - 190.0f, HEIGHT - 80.0f, 160.0f, 50.0f};
             bool mutehovered = CheckCollisionPointRec(mouseposition, mutebutton);
             if (mutehovered)
@@ -397,7 +397,7 @@ int main(void)
                             {
                                 balloons[i].danger = false;
                                 balloons[i].mustpop = false;
-                                balloons[i].gold = (GetRandomValue(1, 10) <= 2);
+                                balloons[i].gold = (GetRandomValue(1, 10) <= 3);
                                 balloons[i].radius = balloonradius;
                             }
 
@@ -450,6 +450,7 @@ int main(void)
                         arrowsleft -= 2;
                         if (arrowsleft < 0)
                             arrowsleft = 0;
+                        PlaySound(minusarrowssound);
                         ArrowPopup(arrowpopup, (Vector2){balloons[i].position.x, 40.0f}, -2);
                     }
                 }
@@ -494,7 +495,7 @@ int main(void)
                 SaveLeaderBoardScores(leaderboard);
             }
 
-            // restart logic
+            // restart and back to menu logic
             if (gameover == true)
             {
                 Rectangle menubutton = {WIDTH - 270.0f, 40.0f, 220.0f, 100.0f};
@@ -623,8 +624,8 @@ int main(void)
             // text coordinates
             DrawTextEx(customfont, "PLAY", (Vector2){WIDTH / 2.0f - 50.0f, 350.0f}, 48, 2, startcolor);
             DrawTextEx(customfont, "HOW TO PLAY", (Vector2){WIDTH / 2.0f - 120.0f, 420.0f}, 48, 2, howtoplaycolor);
-            DrawTextEx(customfont, "LEADERBOARD", (Vector2){WIDTH / 2.0f - 130.0f, 490.0f}, 48, 2, highestscorecolor);
-            DrawTextEx(customfont, "CREDITS", (Vector2){WIDTH / 2.0f - 90.0f, 560.0f}, 48, 2, creditscolor);
+            DrawTextEx(customfont, "LEADERBOARD", (Vector2){WIDTH / 2.0f - 115.0f, 490.0f}, 48, 2, highestscorecolor);
+            DrawTextEx(customfont, "CREDITS", (Vector2){WIDTH / 2.0f - 80.0f, 560.0f}, 48, 2, creditscolor);
             DrawTextEx(customfont, "EXIT", (Vector2){WIDTH / 2.0f - 50.0f, 630.0f}, 48, 2, exitcolor);
 
             // mute/unmute button
@@ -659,12 +660,13 @@ int main(void)
                 "Click and HOLD to pull back the string.",
                 "RELEASE to fire your arrow!",
                 "",
+                "Each balloon is worth 10 points."
                 "Watch out for special balloons:",
-                "GOLD balloons give bonus arrows and points.",
-                "POP balloons must be popped before they escape!",
+                "GOLD balloons give bonus +2 arrows and +10 points.",
+                "POP balloons must be popped before they escape, otherwise you will lose arrows!",
                 "DANGER balloons end your game instantly!",
                 "",
-                "You start with 10 arrows. Good luck!"};
+                "You start with 10 arrows. Best of luck!"};
             int numberoflines = sizeof(instructions) / sizeof(instructions[0]);
             for (int i = 0; i < numberoflines; i++)
             {
@@ -856,7 +858,7 @@ int main(void)
             DrawTextEx(customfont, TextFormat("LAUNCH SPEED: %.2f", launchspeed), (Vector2){32, 721}, 42, 2, BLACK);
             DrawTextEx(customfont, TextFormat("LAUNCH SPEED: %.2f", launchspeed), (Vector2){30, 723}, 42, 2, GOLD);
 
-            // mute/unmute button (bottom right — well clear of the top-right "MAIN MENU" button shown on game over)
+            // mute/unmute button
             Rectangle mutebutton = {WIDTH - 190.0f, HEIGHT - 80.0f, 160.0f, 50.0f};
             bool mutehovered = CheckCollisionPointRec(mouseposition, mutebutton);
             Color mutebuttoncolor = mutehovered ? GOLD : RAYWHITE;
@@ -941,6 +943,7 @@ int main(void)
     UnloadFont(customfont);
     UnloadSound(shootsound);
     UnloadSound(popsound);
+    UnloadSound(minusarrowssound);
     UnloadMusicStream(bgmusic);
     UnloadMusicStream(menumusic);
     UnloadSound(gameoversound);
