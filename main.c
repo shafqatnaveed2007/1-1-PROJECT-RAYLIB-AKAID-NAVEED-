@@ -660,12 +660,12 @@ int main(void)
                 "Click and HOLD to pull back the string.",
                 "RELEASE to fire your arrow!",
                 "",
-                "Each balloon is worth 10 points."
+                "Each balloon is worth 10 points.",
                 "Watch out for special balloons:",
-                "GOLD balloons give bonus +2 arrows and +10 points.",
-                "POP balloons must be popped before they escape, otherwise you will lose arrows!",
+                "GOLD balloons give bonus +2 arrows.",
+                "POP balloons must be popped before they escape, otherwise",
+                "you will lose arrows!",
                 "DANGER balloons end your game instantly!",
-                "",
                 "You start with 10 arrows. Best of luck!"};
             int numberoflines = sizeof(instructions) / sizeof(instructions[0]);
             for (int i = 0; i < numberoflines; i++)
