@@ -341,6 +341,7 @@ int main(void)
                     arrow.radius = 17.0f;
                     arrow.active = true;
                     arrowsleft--;
+                    ArrowPopup(arrowpopup, (Vector2){arrowpivot.x + 50.0f, arrowpivot.y - 50.0f}, -1);
                     PlaySound(shootsound);
                     launchspeed = arrowspeed;
                     pulldistance = 0.0f;
