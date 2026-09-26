@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdbool.h>
-#include<time.h>
+#include <time.h>
 
 // macros
 #define WIDTH 1600
@@ -191,8 +191,8 @@ int main(void)
     float normalballoonheight = 140.0f;
     float balloonradius = normalballoonwidth * 0.4f;
 
-    float dangerwidth = 300.0f;
-    float dangerheight = 164.0f;
+    float dangerwidth = 330.0f;
+    float dangerheight = 180.0f;
     float dangerradius = dangerwidth * 0.25f;
 
     float mustpopwidth = 180.0f;
@@ -343,7 +343,7 @@ int main(void)
                     arrow.radius = 17.0f;
                     arrow.active = true;
                     arrowsleft--;
-                    
+
                     PlaySound(shootsound);
                     launchspeed = arrowspeed;
                     pulldistance = 0.0f;
@@ -378,13 +378,14 @@ int main(void)
                             balloons[i].speed = basespeed + score * speedincrease;
                             balloons[i].active = true;
 
-                            int dangerroll =0;
-                            if(score>=100)
+                            int dangerroll = 0;
+                            if (score >= 100)
                             {
-                                dangerroll=10+(score-100)/10;
-                                if(dangerroll>30) dangerroll=30;
+                                dangerroll = 10 + (score - 100) / 10;
+                                if (dangerroll > 30)
+                                    dangerroll = 30;
                             }
-                            int mustpoproll = (score >= 80 && arrowsleft>1) ? 20 : 0;
+                            int mustpoproll = (score >= 80 && arrowsleft > 1) ? 20 : 0;
                             int roll = GetRandomValue(1, 100);
 
                             if (roll <= dangerroll)
