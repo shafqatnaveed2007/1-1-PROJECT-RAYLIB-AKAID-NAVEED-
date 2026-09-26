@@ -4,13 +4,14 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdbool.h>
+#include<time.h>
 
 // macros
 #define WIDTH 1600
 #define HEIGHT 800
 #define NORMALBALLOONSNUM 4
 #define SPAWNPOINTS 5
-#define MAXBALLOONS 10
+#define MAXBALLOONS 14
 #define MAXPOPUPS 5
 #define MAXARROWPOPUPS 5
 #define MAXLEADERBOARD 5
@@ -126,6 +127,7 @@ int main(void)
     // window and audio setup
     InitWindow(WIDTH, HEIGHT, "HIT 'EM ALL");
     InitAudioDevice();
+    SetRandomSeed(time(NULL));
     SetTargetFPS(60);
 
     // initialize game state
@@ -176,9 +178,9 @@ int main(void)
     // init game variables
     int score = 0;
     int arrowsleft = 10;
-    float gravity = 1000.0f;
+    float gravity = 1250.0f;
     float currenttimer = 0.0f;
-    float spawninterval = 2.0f;
+    float spawninterval = 1.5f;
     float pulldistance = 0.0f;
     float launchspeed = 0.0f;
     bool gameover = false;
@@ -302,7 +304,7 @@ int main(void)
             Vector2 aimdirection = {1.0f, 0.0f};
             float maxpulldistance = 120.0f;
             float minarrowspeed = 500.0f;
-            float maxarrowspeed = 2500.0f;
+            float maxarrowspeed = 2400.0f;
             float pullspeed = 100.0f;
 
             // aiming, pulling back and shooting arrow
@@ -376,8 +378,13 @@ int main(void)
                             balloons[i].speed = basespeed + score * speedincrease;
                             balloons[i].active = true;
 
-                            int dangerroll = (score >= 120) ? 30 : 0;
-                            int mustpoproll = (score >= 80) ? 20 : 0;
+                            int dangerroll =0;
+                            if(score>=100)
+                            {
+                                dangerroll=10+(score-100)/10;
+                                if(dangerroll>30) dangerroll=30;
+                            }
+                            int mustpoproll = (score >= 80 && arrowsleft>1) ? 20 : 0;
                             int roll = GetRandomValue(1, 100);
 
                             if (roll <= dangerroll)
