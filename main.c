@@ -341,7 +341,7 @@ int main(void)
                     arrow.radius = 17.0f;
                     arrow.active = true;
                     arrowsleft--;
-                    ArrowPopup(arrowpopup, (Vector2){arrowpivot.x + 50.0f, arrowpivot.y - 50.0f}, -1);
+                    
                     PlaySound(shootsound);
                     launchspeed = arrowspeed;
                     pulldistance = 0.0f;
@@ -761,7 +761,7 @@ int main(void)
             // draw boy sprite
             float boywidth = 396.0f;
             float boyheight = 528.0f;
-            Vector2 boypos = {240.0f, 630.0f};
+            Vector2 boypos = {200.0f, 670.0f};
             Rectangle boysource = {0.0f, 0.0f, (float)boytexture.width, (float)boytexture.height};
             Rectangle boydest = {boypos.x, boypos.y, boywidth, boyheight};
             DrawTexturePro(boytexture, boysource, boydest, (Vector2){boywidth / 2.0f, boyheight / 2.0f}, 0.0f, WHITE);
